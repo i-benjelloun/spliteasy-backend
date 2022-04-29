@@ -6,9 +6,10 @@ const Group = require('../../models/Group.model.js');
 const { createUser } = require('./user.seeds.js');
 const { createGroup } = require('./group.seeds.js');
 
-// connect to database
-require('../index');
+// Connect to database
+require('../../db');
 
+// Seed database collections
 const seedDB = async function () {
   try {
     await User.deleteMany();
