@@ -22,7 +22,7 @@ exports.createGroup = async () => {
       category: 'Trip',
       currency: 'EUR',
       IsArchived: false,
-      members: [ibrahim._id, ibrahim._id, jane._id],
+      members: [ibrahim._id, alper._id, jane._id],
     },
   ];
   await Group.create(groups);
