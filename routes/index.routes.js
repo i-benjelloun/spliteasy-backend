@@ -1,10 +1,13 @@
-const router = require("express").Router();
+const router = require('express').Router();
 
-router.get("/", (req, res, next) => {
-  res.json("All good in here");
-});
+const authRoutes = require('./auth.routes');
 
-// You put the next routes here 👇
-// example: router.use("/auth", authRoutes)
+const groupRoutes = require('./group.routes');
+
+// Auth routes
+router.use('/auth', authRoutes);
+
+// Groups routes
+router.use('/groups', groupRoutes);
 
 module.exports = router;
