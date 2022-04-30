@@ -9,7 +9,7 @@ const {
 const { isAuthenticated } = require('../middlewares/jwt.middlewares');
 const router = require('express').Router({ mergeParams: true });
 
-// Route : get all groups where the user is a member
+// Route : get all expenses for a group
 router.get('/', isAuthenticated, getExpenses);
 
 // Route : create expense
