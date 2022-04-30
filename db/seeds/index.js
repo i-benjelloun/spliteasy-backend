@@ -7,6 +7,8 @@ const Expense = require('../../models/Expense.model.js');
 const { createUser } = require('./user.seeds.js');
 const { createGroup } = require('./group.seeds.js');
 const { createExpense } = require('./expense.seeds.js');
+const Share = require('../../models/Share.model.js');
+const { createShare } = require('./share.seeds.js');
 
 // Connect to database
 require('../../db');
@@ -22,6 +24,9 @@ const seedDB = async function () {
 
     await Expense.deleteMany();
     await createExpense();
+
+    await Share.deleteMany();
+    await createShare();
 
     mongoose.connection.close();
     console.log('Seed successfull');
