@@ -72,32 +72,30 @@ exports.getExpenseById = async (req, res, next) => {
   }
 };
 
-// Controller : update group
-// exports.updateGroup = async (req, res, next) => {
-//   const { groupId } = req.params;
+// Controller : update expense
+exports.updateExpense = async (req, res, next) => {
+  const { expenseId } = req.params;
 
-//   try {
-//     const schema = Joi.object({
-//       title: Joi.string().trim().required(),
-//       category: Joi.string().trim().required(),
-//       isArchived: Joi.bool(),
-//       members: Joi.array().required(),
-//     });
-//     const validationResult = await schema.validateAsync(req.body, {
-//       abortEarly: false,
-//     });
+  try {
+    // Definition of validation schema
+    const schema = Joi.object({
+      title: Joi.string().trim().required(),
+      paidBy: Joi.required(),
+      category: Joi.string().trim().required(),
+      expense_amount: Joi.number().positive().precision(2).required(),
+    });
 
-//     const group = await Group.findByIdAndUpdate(
-//       groupId,
-//       {
-//         ...validationResult,
-//       },
-//       {
-//         new: true,
-//       }
-//     );
-//     res.json(group);
-//   } catch (error) {
-//     next(createError.InternalServerError('Error in updating group'));
-//   }
-// };
+    // Get validation result
+    const validationResult = await schema.validateAsync(req.body);
+
+    // Update expense
+    await Expense.findByIdAndUpdate(expenseId, {
+      ...validationResult,
+    });
+
+    res.json('Expense updated successfully');
+    d;
+  } catch (err) {
+    next(createError.InternalServerError('Expense could not be updated'));
+  }
+};

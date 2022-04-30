@@ -3,6 +3,7 @@ const {
   createExpense,
   deleteExpense,
   getExpenseById,
+  updateExpense,
 } = require('../controllers/expense.controllers');
 
 const { isAuthenticated } = require('../middlewares/jwt.middlewares');
@@ -19,5 +20,8 @@ router.delete('/:expenseId', isAuthenticated, deleteExpense);
 
 // Route : get expense by id
 router.get('/:expenseId', isAuthenticated, getExpenseById);
+
+// Route : update expense
+router.patch('/:expenseId', isAuthenticated, updateExpense);
 
 module.exports = router;
