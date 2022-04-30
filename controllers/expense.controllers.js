@@ -46,15 +46,16 @@ exports.createExpense = async (req, res, next) => {
   }
 };
 
-// Controller : delete group
-// exports.deleteGroup = async (req, res, next) => {
-//   try {
-//     await Group.findOneAndDelete({ _id: req.params.groupId });
-//     res.json('Group deleted from database!');
-//   } catch (err) {
-//     next(createError.InternalServerError('Error in group deletion'));
-//   }
-// };
+// Controller : delete expense
+exports.deleteExpense = async (req, res, next) => {
+  const { expenseId } = req.params;
+  try {
+    await Expense.findOneAndDelete({ _id: expenseId });
+    res.json('Expense deleted successfully');
+  } catch (err) {
+    next(createError.InternalServerError('Expense could not be deleted'));
+  }
+};
 
 // Controller : get group by id
 // exports.getGroupById = async (req, res, next) => {
