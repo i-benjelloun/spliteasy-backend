@@ -41,7 +41,6 @@ exports.createExpense = async (req, res, next) => {
 
     res.json(expense);
   } catch (err) {
-    console.log(err);
     next(createError.InternalServerError('Expense was not created'));
   }
 };
