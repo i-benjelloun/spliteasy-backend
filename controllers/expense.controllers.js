@@ -17,35 +17,34 @@ exports.getExpenses = async (req, res, next) => {
   }
 };
 
-// Controller : create new group
-// exports.createGroup = async (req, res, next) => {
-//   try {
-//     // Definition of validation schema
-//     const schema = Joi.object({
-//       title: Joi.string().trim().required(),
-//       category: Joi.string().trim().required(),
-//       currency: Joi.string().trim().required(),
-//       isArchived: Joi.bool(),
-//       members: Joi.array().required(),
-//     });
+// Controller : create expense
+exports.createExpense = async (req, res, next) => {
+  try {
+    const { groupId } = req.params;
 
-//     // Get validation result
-//     const validationResult = await schema.validateAsync(req.body, {
-//       abortEarly: false,
-//     });
+    // Definition of validation schema
+    const schema = Joi.object({
+      title: Joi.string().trim().required(),
+      paidBy: Joi.required(),
+      category: Joi.string().trim().required(),
+      expense_amount: Joi.number().positive().precision(2).required(),
+    });
 
-//     // Create group
-//     const group = await Group.create({
-//       ...validationResult,
-//       owner: req.payload._id,
-//     });
+    // Get validation result
+    const validationResult = await schema.validateAsync(req.body);
 
-//     res.json(group);
-//   } catch (err) {
-//     console.log(err);
-//     next(createError.InternalServerError('Group was not created'));
-//   }
-// };
+    // Create group
+    const expense = await Expense.create({
+      ...validationResult,
+      group: groupId,
+    });
+
+    res.json(expense);
+  } catch (err) {
+    console.log(err);
+    next(createError.InternalServerError('Expense was not created'));
+  }
+};
 
 // Controller : delete group
 // exports.deleteGroup = async (req, res, next) => {
