@@ -2,6 +2,7 @@ const { Schema, model } = require('mongoose');
 const createError = require('http-errors');
 const User = require('./User.model');
 const Expense = require('./Expense.model');
+const Share = require('./Share.model');
 
 const groupSchema = new Schema({
   title: { type: String, required: true },
@@ -16,10 +17,15 @@ const groupSchema = new Schema({
   members: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 });
 
-// Delete all group expenses before deleting group
+// Delete all group expenses & shares before deleting group
 groupSchema.pre('findOneAndDelete', async function (next) {
   try {
     const groupId = this.getQuery()['_id'];
+    const expenses = await Expense.find({ group: groupId });
+    const expensesIds = expenses.map((exp) => {
+      return exp._id;
+    });
+    await Share.deleteMany({ expense: { $in: expensesIds } });
     await Expense.deleteMany({ group: groupId });
     next();
   } catch (err) {
