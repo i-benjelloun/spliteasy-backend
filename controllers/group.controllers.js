@@ -48,18 +48,19 @@ exports.createGroup = async (req, res, next) => {
 // Controller : delete group
 exports.deleteGroup = async (req, res, next) => {
   try {
-    await Group.findOneAndDelete({ _id: req.params.groupId });
-    res.json('Group deleted from database!');
+    const { groupId } = req.params;
+    await Group.findOneAndDelete({ _id: groupId });
+    res.json('Group deleted successfully');
   } catch (err) {
-    next(createError.InternalServerError('Error in group deletion'));
+    next(createError.InternalServerError('Group could not be deleted'));
   }
 };
 
 // Controller : get group by id
 exports.getGroupById = async (req, res, next) => {
   try {
-    // find group by Id and associated user then get expenses associated to that group
-    const group = await Group.findById(req.params.groupId)
+    const { groupId } = req.params;
+    const group = await Group.findById(groupId)
       .populate('members', '-password')
       .populate('owner', '-password');
 
@@ -71,30 +72,26 @@ exports.getGroupById = async (req, res, next) => {
 
 // Controller : update group
 exports.updateGroup = async (req, res, next) => {
-  const { groupId } = req.params;
-
   try {
+    const { groupId } = req.params;
+
+    // Definition of validation schema
     const schema = Joi.object({
       title: Joi.string().trim().required(),
       category: Joi.string().trim().required(),
       isArchived: Joi.bool(),
       members: Joi.array().required(),
     });
-    const validationResult = await schema.validateAsync(req.body, {
-      abortEarly: false,
-    });
 
-    const group = await Group.findByIdAndUpdate(
-      groupId,
-      {
-        ...validationResult,
-      },
-      {
-        new: true,
-      }
-    );
-    res.json(group);
+    // Get validation result
+    const validationResult = await schema.validateAsync(req.body);
+
+    // Update group
+    await Group.findByIdAndUpdate(groupId, {
+      ...validationResult,
+    });
+    res.json(`Group updated successfully`);
   } catch (error) {
-    next(createError.InternalServerError('Error in updating group'));
+    next(createError.InternalServerError('Group could not be updated'));
   }
 };
