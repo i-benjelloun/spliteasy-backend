@@ -2,6 +2,7 @@ const {
   getExpenses,
   createExpense,
   deleteExpense,
+  getExpenseById,
 } = require('../controllers/expense.controllers');
 
 const { isAuthenticated } = require('../middlewares/jwt.middlewares');
@@ -15,5 +16,8 @@ router.post('/', isAuthenticated, createExpense);
 
 // Route : delete expense
 router.delete('/:expenseId', isAuthenticated, deleteExpense);
+
+// Route : get expense by id
+router.get('/:expenseId', isAuthenticated, getExpenseById);
 
 module.exports = router;

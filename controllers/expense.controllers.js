@@ -57,19 +57,20 @@ exports.deleteExpense = async (req, res, next) => {
   }
 };
 
-// Controller : get group by id
-// exports.getGroupById = async (req, res, next) => {
-//   try {
-//     // find group by Id and associated user then get expenses associated to that group
-//     const group = await Group.findById(req.params.groupId)
-//       .populate('members', '-password')
-//       .populate('owner', '-password');
+// Controller : get expense by id
+exports.getExpenseById = async (req, res, next) => {
+  const { expenseId } = req.params;
+  try {
+    const expense = await Expense.findById(expenseId).populate(
+      'paidBy',
+      '-password'
+    );
 
-//     res.json(group);
-//   } catch (error) {
-//     next(error);
-//   }
-// };
+    res.json(expense);
+  } catch (err) {
+    next(createError.NotFound('Expense could not be retrieved'));
+  }
+};
 
 // Controller : update group
 // exports.updateGroup = async (req, res, next) => {
