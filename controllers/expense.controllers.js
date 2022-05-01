@@ -1,6 +1,7 @@
 const Joi = require('joi');
 const createError = require('http-errors');
 const Expense = require('../models/Expense.model');
+const Share = require('../models/Share.model');
 
 // Controller : get expenses for a specific group
 exports.getExpenses = async (req, res, next) => {
@@ -17,7 +18,7 @@ exports.getExpenses = async (req, res, next) => {
   }
 };
 
-// Controller : create expense
+// Controller : create expense and shares
 exports.createExpense = async (req, res, next) => {
   try {
     const { groupId } = req.params;
@@ -28,20 +29,60 @@ exports.createExpense = async (req, res, next) => {
       paidBy: Joi.required(),
       category: Joi.string().trim().required(),
       expense_amount: Joi.number().positive().precision(2).required(),
+      shares: Joi.required(),
     });
 
     // Get validation result
     const validationResult = await schema.validateAsync(req.body);
 
-    // Create group
-    const expense = await Expense.create({
-      ...validationResult,
+    // Separate expense properties and shares
+    const { shares, ...expense } = validationResult;
+
+    // Check if total shares equals the expense amount
+    const totalShares = shares.reduce(
+      (a, b) => a.share_amount + b.share_amount
+    );
+    if (totalShares !== expense.expense_amount) {
+      return next(
+        createError.Forbidden('Total shares must add up to expense amount')
+      );
+    }
+
+    // Create expense
+    const createdExpense = await Expense.create({
+      ...expense,
       group: groupId,
     });
 
-    res.json(expense);
+    // Return error if expense was not created
+    if (!createdExpense) {
+      return next(
+        createError.BadRequest('An error occured while creating the expense')
+      );
+    }
+
+    // Append expense id to shares and filter out shares with null amount
+    const filteredShares = shares
+      .map((share) => {
+        return { ...share, expense: createdExpense._id };
+      })
+      .filter((share) => {
+        return share.share_amount > 0;
+      });
+
+    // Create shares
+    const createdShares = await Share.create(filteredShares);
+
+    // Return error if shares were not created
+    if (!createdShares) {
+      return next(
+        createError.BadRequest('An error occured while creating the shares')
+      );
+    }
+
+    res.json({ createdExpense, createdShares });
   } catch (err) {
-    next(createError.InternalServerError('Expense was not created'));
+    next(err);
   }
 };
 
