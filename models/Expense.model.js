@@ -1,5 +1,4 @@
 const { Schema, model } = require('mongoose');
-const Share = require('./Share.model');
 
 const expenseSchema = new Schema(
   {
@@ -22,7 +21,7 @@ const expenseSchema = new Schema(
       ],
       default: 'Other',
     },
-    paidBy: {
+    paid_by: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
@@ -30,30 +29,29 @@ const expenseSchema = new Schema(
     group: {
       type: Schema.Types.ObjectId,
       ref: 'Group',
+      required: true,
     },
     expense_amount: {
       type: Number,
       min: 0,
       required: true,
     },
+    shares: [
+      {
+        _id: false,
+        shared_with: {
+          type: Schema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+        },
+        share_amount: { type: Number, min: 0, required: true },
+      },
+    ],
   },
   {
     timestamps: true,
   }
 );
-
-// Delete all the shares related to an expense before deleting the expense
-expenseSchema.pre('findOneAndDelete', async function (next) {
-  try {
-    const expenseId = this.getQuery()['_id'];
-    await Share.deleteMany({ expense: expenseId });
-    next();
-  } catch (err) {
-    next(
-      createError.InternalServerError('Expense shares could not be deleted')
-    );
-  }
-});
 
 const Expense = model('Expense', expenseSchema);
 
