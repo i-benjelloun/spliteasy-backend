@@ -1,20 +1,21 @@
 const Joi = require('joi');
 const createError = require('http-errors');
 const Expense = require('../models/Expense.model');
-const Share = require('../models/Share.model');
 
 // Controller : get expenses for a specific group
 exports.getExpenses = async (req, res, next) => {
   const { groupId } = req.params;
   try {
     const expenses = await Expense.find({ group: groupId }).populate(
-      'paidBy',
+      'paid_by',
       '-password'
     );
-    console.log(expenses);
+    if (!expenses) {
+      next(createError.NotFound('Expenses not found'));
+    }
     res.json(expenses);
-  } catch (error) {
-    next(createError.NotFound('Route not found'));
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -26,23 +27,21 @@ exports.createExpense = async (req, res, next) => {
     // Definition of validation schema
     const schema = Joi.object({
       title: Joi.string().trim().required(),
-      paidBy: Joi.required(),
+      paid_by: Joi.required(),
       category: Joi.string().trim().required(),
       expense_amount: Joi.number().positive().precision(2).required(),
-      shares: Joi.required(),
+      shares: Joi.array().required(),
     });
 
     // Get validation result
     const validationResult = await schema.validateAsync(req.body);
 
-    // Separate expense properties and shares
-    const { shares, ...expense } = validationResult;
-
     // Check if total shares equals the expense amount
+    const { shares, expense_amount } = validationResult;
     const totalShares = shares.reduce(
       (a, b) => a.share_amount + b.share_amount
     );
-    if (totalShares !== expense.expense_amount) {
+    if (totalShares !== expense_amount) {
       return next(
         createError.Forbidden('Total shares must add up to expense amount')
       );
@@ -50,7 +49,7 @@ exports.createExpense = async (req, res, next) => {
 
     // Create expense
     const createdExpense = await Expense.create({
-      ...expense,
+      ...validationResult,
       group: groupId,
     });
 
@@ -61,26 +60,7 @@ exports.createExpense = async (req, res, next) => {
       );
     }
 
-    // Append expense id to shares and filter out shares with null amount
-    const filteredShares = shares
-      .map((share) => {
-        return { ...share, expense: createdExpense._id };
-      })
-      .filter((share) => {
-        return share.share_amount > 0;
-      });
-
-    // Create shares
-    const createdShares = await Share.create(filteredShares);
-
-    // Return error if shares were not created
-    if (!createdShares) {
-      return next(
-        createError.BadRequest('An error occured while creating the shares')
-      );
-    }
-
-    res.json({ createdExpense, createdShares });
+    res.json(createdExpense);
   } catch (err) {
     next(err);
   }
@@ -90,10 +70,15 @@ exports.createExpense = async (req, res, next) => {
 exports.deleteExpense = async (req, res, next) => {
   const { expenseId } = req.params;
   try {
-    await Expense.findOneAndDelete({ _id: expenseId });
-    res.json('Expense deleted successfully');
+    const deletedExpense = await Expense.findOneAndDelete({ _id: expenseId });
+    if (!deletedExpense) {
+      return next(
+        createError.InternalServerError('Expense could not be deleted')
+      );
+    }
+    res.json(deletedExpense);
   } catch (err) {
-    next(createError.InternalServerError('Expense could not be deleted'));
+    next(err);
   }
 };
 
@@ -102,13 +87,17 @@ exports.getExpenseById = async (req, res, next) => {
   const { expenseId } = req.params;
   try {
     const expense = await Expense.findById(expenseId).populate(
-      'paidBy',
+      'paid_by',
       '-password'
     );
 
+    if (!expense) {
+      next(createError.NotFound('Expense not found'));
+    }
+
     res.json(expense);
   } catch (err) {
-    next(createError.NotFound('Expense could not be retrieved'));
+    next(err);
   }
 };
 
@@ -120,22 +109,41 @@ exports.updateExpense = async (req, res, next) => {
     // Definition of validation schema
     const schema = Joi.object({
       title: Joi.string().trim().required(),
-      paidBy: Joi.required(),
+      paid_by: Joi.required(),
       category: Joi.string().trim().required(),
       expense_amount: Joi.number().positive().precision(2).required(),
+      shares: Joi.array().required(),
     });
 
     // Get validation result
     const validationResult = await schema.validateAsync(req.body);
 
-    // Update expense
-    await Expense.findByIdAndUpdate(expenseId, {
-      ...validationResult,
-    });
+    // Check if total shares equals the expense amount
+    const { shares, expense_amount } = validationResult;
+    const totalShares = shares.reduce(
+      (a, b) => a.share_amount + b.share_amount
+    );
+    if (totalShares !== expense_amount) {
+      return next(
+        createError.Forbidden('Total shares must add up to expense amount')
+      );
+    }
 
-    res.json('Expense updated successfully');
-    d;
+    // Update expense
+    const updatedExpense = await Expense.findByIdAndUpdate(
+      expenseId,
+      {
+        ...validationResult,
+      },
+      { new: true }
+    );
+
+    if (!updatedExpense) {
+      return next(createError.BadRequest('Expense could not be updated'));
+    }
+
+    res.json(updatedExpense);
   } catch (err) {
-    next(createError.InternalServerError('Expense could not be updated'));
+    next(err);
   }
 };

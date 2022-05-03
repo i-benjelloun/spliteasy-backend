@@ -19,7 +19,7 @@ exports.createExpense = async () => {
       expense_amount: 90,
       shares: [
         {
-          shared_with: john._id,
+          shared_with: alper._id,
           share_amount: 40,
         },
         {
@@ -61,7 +61,7 @@ exports.createExpense = async () => {
           share_amount: 22.5,
         },
         {
-          shared_with: ibrahim._id,
+          shared_with: jane._id,
           share_amount: 22.5,
         },
       ],
@@ -69,16 +69,16 @@ exports.createExpense = async () => {
     {
       title: 'Aya Sophia visit',
       category: 'Other',
-      paid_by: john._id,
+      paid_by: jane._id,
       group: istanbulTrip._id,
       expense_amount: 40,
       shares: [
         {
-          shared_with: john._id,
+          shared_with: ibrahim._id,
           share_amount: 20,
         },
         {
-          shared_with: jane._id,
+          shared_with: alper._id,
           share_amount: 20,
         },
       ],
