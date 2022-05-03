@@ -14,51 +14,129 @@ exports.createExpense = async () => {
     {
       title: 'lunch at nato restaurant',
       category: 'Restaurants/Bars',
-      paidBy: alper._id,
+      paid_by: alper._id,
       group: istanbulTrip._id,
       expense_amount: 90,
+      shares: [
+        {
+          shared_with: alper._id,
+          share_amount: 40,
+        },
+        {
+          shared_with: ibrahim._id,
+          share_amount: 25,
+        },
+        {
+          shared_with: jane._id,
+          share_amount: 25,
+        },
+      ],
     },
     {
       title: 'Boat trip on boasphorus',
       category: 'Transport',
-      paidBy: ibrahim._id,
+      paid_by: ibrahim._id,
       group: istanbulTrip._id,
       expense_amount: 30,
+      shares: [
+        {
+          shared_with: alper._id,
+          share_amount: 20,
+        },
+        {
+          shared_with: ibrahim._id,
+          share_amount: 10,
+        },
+      ],
     },
     {
       title: 'Dolmabahçe museum visit',
       category: 'Other',
-      paidBy: ibrahim._id,
+      paid_by: ibrahim._id,
       group: istanbulTrip._id,
       expense_amount: 45,
+      shares: [
+        {
+          shared_with: alper._id,
+          share_amount: 22.5,
+        },
+        {
+          shared_with: jane._id,
+          share_amount: 22.5,
+        },
+      ],
     },
     {
       title: 'Aya Sophia visit',
       category: 'Other',
-      paidBy: john._id,
+      paid_by: jane._id,
       group: istanbulTrip._id,
       expense_amount: 40,
+      shares: [
+        {
+          shared_with: ibrahim._id,
+          share_amount: 20,
+        },
+        {
+          shared_with: alper._id,
+          share_amount: 20,
+        },
+      ],
     },
     {
       title: 'Birthday cake',
       category: 'Other',
-      paidBy: john._id,
+      paid_by: john._id,
       group: birthday._id,
       expense_amount: 50,
+      shares: [
+        {
+          shared_with: john._id,
+          share_amount: 25,
+        },
+        {
+          shared_with: alper._id,
+          share_amount: 25,
+        },
+      ],
     },
     {
       title: 'Snacks and decorations',
       category: 'Other',
-      paidBy: jane._id,
+      paid_by: jane._id,
       group: birthday._id,
       expense_amount: 120,
+      shares: [
+        {
+          shared_with: jane._id,
+          share_amount: 60,
+        },
+        {
+          shared_with: ibrahim._id,
+          share_amount: 60,
+        },
+      ],
     },
     {
       title: 'Gift',
       category: 'Other',
-      paidBy: ibrahim._id,
+      paid_by: ibrahim._id,
       group: birthday._id,
       expense_amount: 180,
+      shares: [
+        {
+          shared_with: ibrahim._id,
+          share_amount: 60,
+        },
+        {
+          shared_with: alper._id,
+          share_amount: 60,
+        },
+        {
+          shared_with: john._id,
+          share_amount: 60,
+        },
+      ],
     },
   ];
   await Expense.create(expenses);

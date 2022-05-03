@@ -1,6 +1,7 @@
-const Group = require('../models/Group.model');
 const Joi = require('joi');
 const createError = require('http-errors');
+const Expense = require('../models/Expense.model');
+const Group = require('../models/Group.model');
 
 // Controller : get all groups where the user is a member
 exports.getGroups = async (req, res, next) => {
@@ -9,9 +10,14 @@ exports.getGroups = async (req, res, next) => {
       'members',
       '-password'
     );
+
+    if (!groups) {
+      next(createError.NotFound('ERROR : Groups not found'));
+    }
+
     res.json(groups);
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
 };
 
@@ -28,20 +34,22 @@ exports.createGroup = async (req, res, next) => {
     });
 
     // Get validation result
-    const validationResult = await schema.validateAsync(req.body, {
-      abortEarly: false,
-    });
+    const validationResult = await schema.validateAsync(req.body);
 
     // Create group
-    const group = await Group.create({
+    const createdGroup = await Group.create({
       ...validationResult,
+      members: [req.payload._id, ...validationResult.members],
       owner: req.payload._id,
     });
 
-    res.json(group);
+    if (!createdGroup) {
+      return next(createError.BadRequest('ERROR : Group was not created'));
+    }
+
+    res.json(createdGroup);
   } catch (err) {
-    console.log(err);
-    next(createError.InternalServerError('Group was not created'));
+    next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
 };
 
@@ -49,10 +57,13 @@ exports.createGroup = async (req, res, next) => {
 exports.deleteGroup = async (req, res, next) => {
   try {
     const { groupId } = req.params;
-    await Group.findOneAndDelete({ _id: groupId });
-    res.json('Group deleted successfully');
+    const deletedGroup = await Group.findOneAndDelete({ _id: groupId });
+    if (!deletedGroup) {
+      return next(createError.BadRequest('ERROR : Group was not deleted'));
+    }
+    res.json(deletedGroup);
   } catch (err) {
-    next(createError.InternalServerError('Group could not be deleted'));
+    next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
 };
 
@@ -64,9 +75,13 @@ exports.getGroupById = async (req, res, next) => {
       .populate('members', '-password')
       .populate('owner', '-password');
 
+    if (!group) {
+      return next(createError.NotFound('ERROR : Group not found'));
+    }
+
     res.json(group);
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
 };
 
@@ -86,12 +101,49 @@ exports.updateGroup = async (req, res, next) => {
     // Get validation result
     const validationResult = await schema.validateAsync(req.body);
 
+    // Can't remove a member who was involved in at least one expense
+    const groupExpenses = await Expense.find({ group: groupId });
+    const currentGroup = await Group.findById(groupId);
+
+    for (let member of currentGroup.members) {
+      // Perform verifications on deleted members only
+      if (!validationResult.members.includes(member.toString())) {
+        // Expenses where deleted member was involved
+        const memberExpenses = groupExpenses.filter((exp) => {
+          return (
+            exp.paid_by.equals(member) ||
+            exp.shares.filter((share) => {
+              return share.shared_with.equals(member);
+            }).length !== 0
+          );
+        });
+
+        // If member was involved in an expense return an error
+        if (memberExpenses.length > 0) {
+          return next(
+            createError.Forbidden(
+              `ERROR : Can't remove a member who was involved in at least one expense`
+            )
+          );
+        }
+      }
+    }
+
     // Update group
-    await Group.findByIdAndUpdate(groupId, {
-      ...validationResult,
-    });
-    res.json(`Group updated successfully`);
-  } catch (error) {
-    next(createError.InternalServerError('Group could not be updated'));
+    const updatedGroup = await Group.findByIdAndUpdate(
+      groupId,
+      {
+        ...validationResult,
+      },
+      { new: true }
+    );
+
+    if (!updatedGroup) {
+      return next(createError.BadRequest('ERROR : Group was not updated'));
+    }
+
+    res.json(updatedGroup);
+  } catch (err) {
+    next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
 };

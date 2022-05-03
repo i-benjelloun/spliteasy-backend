@@ -1,3 +1,4 @@
+const { default: mongoose } = require('mongoose');
 const { Schema, model } = require('mongoose');
 
 const expenseSchema = new Schema(
@@ -21,7 +22,7 @@ const expenseSchema = new Schema(
       ],
       default: 'Other',
     },
-    paidBy: {
+    paid_by: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
@@ -29,12 +30,25 @@ const expenseSchema = new Schema(
     group: {
       type: Schema.Types.ObjectId,
       ref: 'Group',
+      required: true,
     },
     expense_amount: {
       type: Number,
       min: 0,
       required: true,
     },
+    date: { type: Schema.Types.Date, default: new Date(), required: true },
+    shares: [
+      {
+        _id: false,
+        shared_with: {
+          type: Schema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+        },
+        share_amount: { type: Number, min: 0, required: true },
+      },
+    ],
   },
   {
     timestamps: true,
