@@ -4,18 +4,18 @@ const Expense = require('../models/Expense.model');
 
 // Controller : get expenses for a specific group
 exports.getExpenses = async (req, res, next) => {
-  const { groupId } = req.params;
   try {
+    const { groupId } = req.params;
     const expenses = await Expense.find({ group: groupId }).populate(
       'paid_by',
       '-password'
     );
     if (!expenses) {
-      next(createError.NotFound('Expenses not found'));
+      next(createError.NotFound('ERROR : Expenses not found'));
     }
     res.json(expenses);
   } catch (err) {
-    next(err);
+    next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
 };
 
@@ -31,6 +31,7 @@ exports.createExpense = async (req, res, next) => {
       category: Joi.string().trim().required(),
       expense_amount: Joi.number().positive().precision(2).required(),
       shares: Joi.array().required(),
+      date: Joi.date().required(),
     });
 
     // Get validation result
@@ -43,7 +44,9 @@ exports.createExpense = async (req, res, next) => {
     );
     if (totalShares !== expense_amount) {
       return next(
-        createError.Forbidden('Total shares must add up to expense amount')
+        createError.Forbidden(
+          'ERROR : Total shares must add up to expense amount'
+        )
       );
     }
 
@@ -55,14 +58,12 @@ exports.createExpense = async (req, res, next) => {
 
     // Return error if expense was not created
     if (!createdExpense) {
-      return next(
-        createError.BadRequest('An error occured while creating the expense')
-      );
+      return next(createError.BadRequest('ERROR : Expense was not created'));
     }
 
     res.json(createdExpense);
   } catch (err) {
-    next(err);
+    next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
 };
 
@@ -73,39 +74,38 @@ exports.deleteExpense = async (req, res, next) => {
     const deletedExpense = await Expense.findOneAndDelete({ _id: expenseId });
     if (!deletedExpense) {
       return next(
-        createError.InternalServerError('Expense could not be deleted')
+        createError.InternalServerError('ERROR : Expense was not deleted')
       );
     }
     res.json(deletedExpense);
   } catch (err) {
-    next(err);
+    next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
 };
 
 // Controller : get expense by id
 exports.getExpenseById = async (req, res, next) => {
-  const { expenseId } = req.params;
   try {
+    const { expenseId } = req.params;
     const expense = await Expense.findById(expenseId).populate(
       'paid_by',
       '-password'
     );
 
     if (!expense) {
-      next(createError.NotFound('Expense not found'));
+      next(createError.NotFound('ERROR : Expense not found'));
     }
 
     res.json(expense);
   } catch (err) {
-    next(err);
+    next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
 };
 
 // Controller : update expense
 exports.updateExpense = async (req, res, next) => {
-  const { expenseId } = req.params;
-
   try {
+    const { expenseId } = req.params;
     // Definition of validation schema
     const schema = Joi.object({
       title: Joi.string().trim().required(),
@@ -113,6 +113,7 @@ exports.updateExpense = async (req, res, next) => {
       category: Joi.string().trim().required(),
       expense_amount: Joi.number().positive().precision(2).required(),
       shares: Joi.array().required(),
+      date: Joi.date().required(),
     });
 
     // Get validation result
@@ -125,7 +126,9 @@ exports.updateExpense = async (req, res, next) => {
     );
     if (totalShares !== expense_amount) {
       return next(
-        createError.Forbidden('Total shares must add up to expense amount')
+        createError.Forbidden(
+          'ERROR : Total shares must add up to expense amount'
+        )
       );
     }
 
@@ -139,11 +142,11 @@ exports.updateExpense = async (req, res, next) => {
     );
 
     if (!updatedExpense) {
-      return next(createError.BadRequest('Expense could not be updated'));
+      return next(createError.BadRequest('ERROR : Expense was not updated'));
     }
 
     res.json(updatedExpense);
   } catch (err) {
-    next(err);
+    next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
 };

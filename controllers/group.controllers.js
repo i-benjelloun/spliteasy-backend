@@ -1,7 +1,7 @@
-const Group = require('../models/Group.model');
 const Joi = require('joi');
 const createError = require('http-errors');
 const Expense = require('../models/Expense.model');
+const Group = require('../models/Group.model');
 
 // Controller : get all groups where the user is a member
 exports.getGroups = async (req, res, next) => {
