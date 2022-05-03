@@ -1,3 +1,4 @@
+const { default: mongoose } = require('mongoose');
 const { Schema, model } = require('mongoose');
 
 const expenseSchema = new Schema(
@@ -36,6 +37,7 @@ const expenseSchema = new Schema(
       min: 0,
       required: true,
     },
+    date: { type: Schema.Types.Date, default: new Date(), required: true },
     shares: [
       {
         _id: false,

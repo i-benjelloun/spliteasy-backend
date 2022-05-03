@@ -2,18 +2,28 @@ const { Schema, model } = require('mongoose');
 const createError = require('http-errors');
 const User = require('./User.model');
 const Expense = require('./Expense.model');
+const { currency_codes } = require('../helpers/currencies');
 
 const groupSchema = new Schema({
   title: { type: String, required: true },
-  owner: { type: Schema.Types.ObjectId, ref: 'User' },
+  owner: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   category: {
     type: String,
     enum: ['Event', 'Trip', 'Couple', 'Project', 'Other'],
     default: 'Other',
+    required: true,
   },
-  currency: { type: String },
+  currency: {
+    type: String,
+    enum: currency_codes,
+    default: 'EUR',
+    required: true,
+  },
   isArchived: { type: Boolean, default: false },
-  members: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+  members: {
+    type: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    required: true,
+  },
 });
 
 // Delete all group expenses & shares before deleting group
