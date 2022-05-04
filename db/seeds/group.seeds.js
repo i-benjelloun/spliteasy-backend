@@ -14,7 +14,7 @@ exports.createGroup = async () => {
       category: 'Event',
       currency: 'EUR',
       IsArchived: false,
-      members: [alper._id, ibrahim._id, john._id],
+      members: [alper._id, ibrahim._id, john._id, jane._id],
     },
     {
       title: 'Trip to Istanbul',

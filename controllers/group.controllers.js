@@ -2,6 +2,8 @@ const Joi = require('joi');
 const createError = require('http-errors');
 const Expense = require('../models/Expense.model');
 const Group = require('../models/Group.model');
+const { computeBalances } = require('../helpers/computeBalances');
+const { computeReimbursements } = require('../helpers/computeReimbursements');
 
 // Controller : get all groups where the user is a member
 exports.getGroups = async (req, res, next) => {
@@ -143,6 +145,25 @@ exports.updateGroup = async (req, res, next) => {
     }
 
     res.json(updatedGroup);
+  } catch (err) {
+    next(createError.InternalServerError(err.name + ' : ' + err.message));
+  }
+};
+
+exports.getBalances = async (req, res, next) => {
+  try {
+    const { groupId } = req.params;
+
+    // Get balances for all group members
+    const balances = await computeBalances(groupId);
+    if (!balances) {
+      return next(createError.NotFound('ERROR : Group not found'));
+    }
+
+    // Compute reimbursements
+    const reimbursements = computeReimbursements(balances);
+
+    res.json({ balances, reimbursements });
   } catch (err) {
     next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
