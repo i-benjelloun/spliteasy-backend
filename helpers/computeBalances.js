@@ -2,6 +2,7 @@ const createError = require('http-errors');
 const { default: mongoose } = require('mongoose');
 const Expense = require('../models/Expense.model');
 const Group = require('../models/Group.model');
+const { toTwoDecimals } = require('./toTwoDecimals');
 
 exports.computeBalances = async (groupId) => {
   const group = await Group.findById(groupId);
@@ -55,7 +56,7 @@ exports.computeBalances = async (groupId) => {
       user: member,
       totalPaid: totalPaid || 0,
       totalOwed: totalOwed || 0,
-      balance: (totalPaid || 0) - (totalOwed || 0),
+      balance: toTwoDecimals((totalPaid || 0) - (totalOwed || 0)),
     });
   }
 

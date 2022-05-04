@@ -58,11 +58,11 @@ exports.createExpense = async () => {
       shares: [
         {
           shared_with: alper._id,
-          share_amount: 22.5,
+          share_amount: 22.95,
         },
         {
           shared_with: jane._id,
-          share_amount: 22.5,
+          share_amount: 22.05,
         },
       ],
     },

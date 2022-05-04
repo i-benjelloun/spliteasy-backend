@@ -1,3 +1,5 @@
+const { toTwoDecimals } = require('./toTwoDecimals');
+
 exports.computeReimbursements = (balances) => {
   const reimbursements = [];
 
@@ -40,8 +42,12 @@ exports.computeReimbursements = (balances) => {
       owed_amount: reimbursement,
       owes_to: withMaxBalance.user,
     });
-    withMinBalance.balance += reimbursement;
-    withMaxBalance.balance -= reimbursement;
+    withMinBalance.balance = toTwoDecimals(
+      withMinBalance.balance + reimbursement
+    );
+    withMaxBalance.balance = toTwoDecimals(
+      withMaxBalance.balance - reimbursement
+    );
   }
 
   return reimbursements;
