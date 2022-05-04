@@ -4,6 +4,7 @@ const {
   deleteGroup,
   getGroupById,
   updateGroup,
+  getBalances,
 } = require('../controllers/group.controllers');
 const { isAuthenticated } = require('../middlewares/jwt.middlewares');
 const router = require('express').Router();
@@ -22,5 +23,8 @@ router.get('/:groupId', isAuthenticated, getGroupById);
 
 // Route : update group
 router.patch('/:groupId', isAuthenticated, updateGroup);
+
+// Route : update group
+router.get('/:groupId/balances', isAuthenticated, getBalances);
 
 module.exports = router;
