@@ -50,5 +50,7 @@ exports.computeReimbursements = (balances) => {
     );
   }
 
-  return reimbursements;
+  return reimbursements.sort((a, b) => {
+    return a.user._id.localeCompare(b.user._id);
+  });
 };
