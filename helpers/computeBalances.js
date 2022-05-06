@@ -5,7 +5,11 @@ const Group = require('../models/Group.model');
 const { toTwoDecimals } = require('./toTwoDecimals');
 
 exports.computeBalances = async (groupId) => {
-  const group = await Group.findById(groupId);
+  const group = await Group.findById(groupId).populate('members', {
+    _id: 1,
+    firstName: 1,
+    lastName: 1,
+  });
 
   if (!group) {
     return null;
@@ -45,11 +49,11 @@ exports.computeBalances = async (groupId) => {
   const balances = [];
   for (member of group.members) {
     const totalPaid = paidByMember.find((e) => {
-      return e._id.equals(member);
+      return e._id.equals(member._id);
     })?.totalPaid;
 
     const totalOwed = owedByMember.find((e) => {
-      return e._id.equals(member);
+      return e._id.equals(member._id);
     })?.totalOwed;
 
     balances.push({
