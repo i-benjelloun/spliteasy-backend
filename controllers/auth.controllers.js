@@ -63,8 +63,8 @@ const signupController = async (req, res, next) => {
   }
 };
 
-// Signin Controller
-const signinController = async (req, res, next) => {
+// Log In Controller
+const loginController = async (req, res, next) => {
   try {
     // Get email and password from the body of the request
     const { email, password } = req.body;
@@ -117,4 +117,4 @@ const verifyController = (req, res, next) => {
   res.status(200).json(req.payload);
 };
 
-module.exports = { signinController, signupController, verifyController };
+module.exports = { loginController, signupController, verifyController };

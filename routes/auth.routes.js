@@ -4,7 +4,7 @@ const { isAuthenticated } = require('./../middlewares/jwt.middlewares.js');
 const {
   signupController,
   verifyController,
-  signinController,
+  loginController,
 } = require('../controllers/auth.controllers');
 
 const router = express.Router();
@@ -12,10 +12,10 @@ const router = express.Router();
 // Signup route
 router.post('/signup', signupController);
 
-// Signin route
-router.post('/signin', signinController);
+// Login route
+router.post('/login', loginController);
 
-// verigy route
+// Verify route
 router.get('/verify', isAuthenticated, verifyController);
 
 module.exports = router;
