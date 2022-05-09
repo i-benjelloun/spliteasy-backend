@@ -11,32 +11,33 @@ const signupController = async (req, res, next) => {
 
     // Check if email or password or name are provided as empty string
     if (firstName === '' || lastName === '' || email === '' || password === '')
-      return next(
-        createError.BadRequest(
-          'Provide first name, last name, password and name'
-        )
-      );
+      return res.status(400).json({
+        errorMessage: 'Please provide first name, last name, email & password.',
+      });
 
     // Use regex to validate the email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     if (!emailRegex.test(email)) {
-      return next(createError.BadRequest('Provide a valid email address.'));
+      return res.status(400).json({
+        errorMessage: 'Please provide a valid email.',
+      });
     }
 
     // Use regex to validate the password format
     const passwordRegex = /(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}/;
     if (!passwordRegex.test(password)) {
-      return next(
-        createError.BadRequest(
-          'Password must have at least 6 characters and contain at least one number, one lowercase and one uppercase letter.'
-        )
-      );
+      return res.status(400).json({
+        errorMessage:
+          'Password must have at least 6 characters and contain at least one number, one lowercase and one uppercase letter.',
+      });
     }
 
     // Check the users collection if a user with the same email already exists
     const user = await User.findOne({ email });
     if (user) {
-      return next(createError.BadRequest('User already exists.'));
+      return res.status(400).json({
+        errorMessage: 'User already exists.',
+      });
     } else {
       // If email is unique, proceed to hash the password
       const salt = bcrypt.genSaltSync(saltRounds);
@@ -51,15 +52,11 @@ const signupController = async (req, res, next) => {
       });
 
       res.status(201).json({
-        _id: createdUser._id,
-        firstName: createdUser.firstName,
-        lastName: createdUser.lastName,
-        email: createdUser.email,
+        createdUser: createdUser._id,
       });
     }
-  } catch (error) {
-    console.log(error);
-    next(createError.InternalServerError('Internal Server Error'));
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -71,7 +68,9 @@ const loginController = async (req, res, next) => {
 
     // Check if email or password are provided as empty string
     if (email === '' || password === '') {
-      return next(createError.BadRequest('Provide email and password.'));
+      return res
+        .status(400)
+        .json({ errorMessage: 'Provide email and password.' });
     }
 
     // Check the users collection if a user with the same email exists
@@ -79,7 +78,7 @@ const loginController = async (req, res, next) => {
 
     if (!foundUser) {
       // If the user is not found, send an error response
-      return next(createError.Unauthorized('User not found.'));
+      return res.status(400).json({ errorMessage: 'Wrong crendentials.' });
     } else {
       // Compare the provided password with the one saved in the database
       const passwordCorrect = bcrypt.compareSync(password, foundUser.password);
@@ -95,16 +94,13 @@ const loginController = async (req, res, next) => {
         });
 
         // Send the token as the response
-        res.status(200).json({ authToken: authToken });
+        return res.status(200).json({ authToken: authToken });
       } else {
-        return next(
-          createError.Unauthorized('Unable to authenticate the user')
-        );
+        return res.status(400).json({ errorMessage: 'Wrong crendentials.' });
       }
     }
-  } catch (error) {
-    console.log(error);
-    next(createError.InternalServerError('Internal Server Error'));
+  } catch (err) {
+    next(err);
   }
 };
 
