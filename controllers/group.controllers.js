@@ -14,10 +14,10 @@ exports.getGroups = async (req, res, next) => {
     );
 
     if (!groups) {
-      next(createError.NotFound('ERROR : Groups not found'));
+      return res.status(404).json({ errorMessage: 'Groups not found' });
     }
 
-    res.json(groups);
+    return res.status(200).json({ groups });
   } catch (err) {
     next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
