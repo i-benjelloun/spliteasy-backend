@@ -45,13 +45,15 @@ exports.createGroup = async (req, res, next) => {
     for (let member of validationResult.members) {
       const user = await User.findOne({ email: member });
       if (user) {
-        groupMembers.push(user._id);
+        groupMembers.push(user._id.toString());
       } else {
         return res
           .status(400)
           .json({ errorMessage: `${member} does not exist in database` });
       }
     }
+
+    console.log(groupMembers);
 
     // Create group
     const createdGroup = await Group.create({
@@ -118,13 +120,26 @@ exports.updateGroup = async (req, res, next) => {
     // Get validation result
     const validationResult = await schema.validateAsync(req.body);
 
+    // Validate members
+    const groupMembers = [req.payload._id];
+    for (let member of validationResult.members) {
+      const user = await User.findOne({ email: member });
+      if (user) {
+        groupMembers.push(user._id.toString());
+      } else {
+        return res
+          .status(400)
+          .json({ errorMessage: `${member} does not exist in database` });
+      }
+    }
+
     // Can't remove a member who was involved in at least one expense
     const groupExpenses = await Expense.find({ group: groupId });
     const currentGroup = await Group.findById(groupId);
 
     for (let member of currentGroup.members) {
       // Perform verifications on deleted members only
-      if (!validationResult.members.includes(member.toString())) {
+      if (!groupMembers.includes(member.toString())) {
         // Expenses where deleted member was involved
         const memberExpenses = groupExpenses.filter((exp) => {
           return (
@@ -137,11 +152,9 @@ exports.updateGroup = async (req, res, next) => {
 
         // If member was involved in an expense return an error
         if (memberExpenses.length > 0) {
-          return next(
-            createError.Forbidden(
-              `ERROR : Can't remove a member who was involved in at least one expense`
-            )
-          );
+          return res.status(403).json({
+            errorMessage: `Can't remove a member who was involved in at least one expense`,
+          });
         }
       }
     }
@@ -156,10 +169,12 @@ exports.updateGroup = async (req, res, next) => {
     );
 
     if (!updatedGroup) {
-      return next(createError.BadRequest('ERROR : Group was not updated'));
+      return res.status(400).json({
+        errorMessage: `Group was not updated`,
+      });
     }
 
-    res.json(updatedGroup);
+    return res.status(200).json({ updatedGroup });
   } catch (err) {
     next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
