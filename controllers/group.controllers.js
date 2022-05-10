@@ -95,10 +95,10 @@ exports.getGroupById = async (req, res, next) => {
       .populate('owner', '-password');
 
     if (!group) {
-      return next(createError.NotFound('ERROR : Group not found'));
+      return res.status(404).json({ errorMessage: 'Group not found' });
     }
 
-    res.json(group);
+    return res.status(200).json({ group });
   } catch (err) {
     next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
