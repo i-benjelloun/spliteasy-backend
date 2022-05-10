@@ -46,10 +46,10 @@ exports.createGroup = async (req, res, next) => {
     });
 
     if (!createdGroup) {
-      return next(createError.BadRequest('ERROR : Group was not created'));
+      return res.status(404).json({ errorMessage: 'Group was not created' });
     }
 
-    res.json(createdGroup);
+    return res.status(201).json({ createdGroup });
   } catch (err) {
     next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
