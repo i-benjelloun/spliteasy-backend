@@ -76,11 +76,19 @@ exports.createGroup = async (req, res, next) => {
 exports.deleteGroup = async (req, res, next) => {
   try {
     const { groupId } = req.params;
-    const deletedGroup = await Group.findOneAndDelete({ _id: groupId });
-    if (!deletedGroup) {
-      return next(createError.BadRequest('ERROR : Group was not deleted'));
+    const group = await Group.findById(groupId);
+    if (req.payload._id !== group.owner.toString()) {
+      return res
+        .status(403)
+        .json({ errorMessage: 'Only group owner can delete a group' });
+    } else {
+      const deletedGroup = await Group.findOneAndDelete({ _id: groupId });
+      if (!deletedGroup) {
+        return res.status(404).json({ errorMessage: 'Group not found' });
+      } else {
+        res.status(200).json({ deletedGroup });
+      }
     }
-    res.json(deletedGroup);
   } catch (err) {
     next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
@@ -95,10 +103,10 @@ exports.getGroupById = async (req, res, next) => {
       .populate('owner', '-password');
 
     if (!group) {
-      return next(createError.NotFound('ERROR : Group not found'));
+      return res.status(404).json({ errorMessage: 'Group not found' });
     }
 
-    res.json(group);
+    return res.status(200).json({ group });
   } catch (err) {
     next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
@@ -108,13 +116,19 @@ exports.getGroupById = async (req, res, next) => {
 exports.updateGroup = async (req, res, next) => {
   try {
     const { groupId } = req.params;
+    const group = await Group.findById(groupId);
+    if (req.payload._id !== group.owner.toString()) {
+      return res
+        .status(403)
+        .json({ errorMessage: 'Only group owner can update a group' });
+    }
 
     // Definition of validation schema
     const schema = Joi.object({
-      title: Joi.string().trim().required(),
-      category: Joi.string().trim().required(),
+      title: Joi.string().trim(),
+      category: Joi.string().trim(),
       isArchived: Joi.bool(),
-      members: Joi.array().required(),
+      members: Joi.array(),
     });
 
     // Get validation result
@@ -122,14 +136,16 @@ exports.updateGroup = async (req, res, next) => {
 
     // Validate members
     const groupMembers = [req.payload._id];
-    for (let member of validationResult.members) {
-      const user = await User.findOne({ email: member });
-      if (user) {
-        groupMembers.push(user._id.toString());
-      } else {
-        return res
-          .status(400)
-          .json({ errorMessage: `${member} does not exist in database` });
+    if (validationResult.members) {
+      for (let member of validationResult.members) {
+        const user = await User.findOne({ email: member });
+        if (user) {
+          groupMembers.push(user._id.toString());
+        } else {
+          return res
+            .status(400)
+            .json({ errorMessage: `${member} does not exist in database` });
+        }
       }
     }
 
@@ -164,6 +180,7 @@ exports.updateGroup = async (req, res, next) => {
       groupId,
       {
         ...validationResult,
+        members: groupMembers,
       },
       { new: true }
     );
@@ -187,13 +204,16 @@ exports.getBalances = async (req, res, next) => {
     // Get balances for all group members
     const balances = await computeBalances(groupId);
     if (!balances) {
-      return next(createError.NotFound('ERROR : Group not found'));
+      return res.status(404).json({ errorMessage: 'Balances not found' });
     }
 
     // Compute reimbursements
     const reimbursements = computeReimbursements(balances);
+    if (!reimbursements) {
+      return res.status(404).json({ errorMessage: 'Reimbursements not found' });
+    }
 
-    res.json({ balances, reimbursements });
+    return res.status(200).json({ balances, reimbursements });
   } catch (err) {
     next(createError.InternalServerError(err.name + ' : ' + err.message));
   }

@@ -11,9 +11,9 @@ exports.getExpenses = async (req, res, next) => {
       '-password'
     );
     if (!expenses) {
-      next(createError.NotFound('ERROR : Expenses not found'));
+      return res.status(404).json({ errorMessage: 'Expenses not found' });
     }
-    res.json(expenses);
+    res.status(200).json({ expenses });
   } catch (err) {
     next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
