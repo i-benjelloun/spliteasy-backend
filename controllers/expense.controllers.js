@@ -39,15 +39,12 @@ exports.createExpense = async (req, res, next) => {
 
     // Check if total shares equals the expense amount
     const { shares, expense_amount } = validationResult;
-    const totalShares = shares.reduce(
-      (a, b) => a.share_amount + b.share_amount
-    );
+    const totalShares = shares.reduce((a, b) => a + b.share_amount, 0);
+    console.log(shares, totalShares);
     if (totalShares !== expense_amount) {
-      return next(
-        createError.Forbidden(
-          'ERROR : Total shares must add up to expense amount'
-        )
-      );
+      return res
+        .status(403)
+        .json({ errorMessage: 'Total shares must add up to expense amount' });
     }
 
     // Create expense
@@ -58,10 +55,10 @@ exports.createExpense = async (req, res, next) => {
 
     // Return error if expense was not created
     if (!createdExpense) {
-      return next(createError.BadRequest('ERROR : Expense was not created'));
+      return res.status(400).json({ errorMessage: 'Expense was not created' });
     }
 
-    res.json(createdExpense);
+    return res.status(201).json({ createdExpense });
   } catch (err) {
     next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
