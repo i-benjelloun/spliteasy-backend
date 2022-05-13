@@ -197,6 +197,7 @@ exports.updateGroup = async (req, res, next) => {
   }
 };
 
+// Controller : get group balances
 exports.getBalances = async (req, res, next) => {
   try {
     const { groupId } = req.params;
