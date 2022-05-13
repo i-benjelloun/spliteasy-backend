@@ -39,15 +39,11 @@ exports.createExpense = async (req, res, next) => {
 
     // Check if total shares equals the expense amount
     const { shares, expense_amount } = validationResult;
-    const totalShares = shares.reduce(
-      (a, b) => a.share_amount + b.share_amount
-    );
+    const totalShares = shares.reduce((a, b) => a + b.share_amount, 0);
     if (totalShares !== expense_amount) {
-      return next(
-        createError.Forbidden(
-          'ERROR : Total shares must add up to expense amount'
-        )
-      );
+      return res
+        .status(403)
+        .json({ errorMessage: 'Total shares must add up to expense amount' });
     }
 
     // Create expense
@@ -58,10 +54,10 @@ exports.createExpense = async (req, res, next) => {
 
     // Return error if expense was not created
     if (!createdExpense) {
-      return next(createError.BadRequest('ERROR : Expense was not created'));
+      return res.status(400).json({ errorMessage: 'Expense was not created' });
     }
 
-    res.json(createdExpense);
+    return res.status(201).json({ createdExpense });
   } catch (err) {
     next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
@@ -73,11 +69,9 @@ exports.deleteExpense = async (req, res, next) => {
   try {
     const deletedExpense = await Expense.findOneAndDelete({ _id: expenseId });
     if (!deletedExpense) {
-      return next(
-        createError.InternalServerError('ERROR : Expense was not deleted')
-      );
+      return res.status(404).json({ errorMessage: 'Expense not found' });
     }
-    res.json(deletedExpense);
+    return res.status(200).json({ deletedExpense });
   } catch (err) {
     next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
@@ -87,16 +81,24 @@ exports.deleteExpense = async (req, res, next) => {
 exports.getExpenseById = async (req, res, next) => {
   try {
     const { expenseId } = req.params;
-    const expense = await Expense.findById(expenseId).populate(
-      'paid_by',
-      '-password'
-    );
+    const expense = await Expense.findById(expenseId)
+      .populate('paid_by', '-password')
+      .populate('shares.shared_with', '-password')
+      .populate({
+        path: 'group',
+        model: 'Group',
+        populate: {
+          path: 'members',
+          model: 'User',
+          select: '-password',
+        },
+      });
 
     if (!expense) {
-      next(createError.NotFound('ERROR : Expense not found'));
+      return res.status(404).json({ errorMessage: 'Expense not found' });
     }
 
-    res.json(expense);
+    return res.status(200).json({ expense });
   } catch (err) {
     next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
@@ -108,12 +110,12 @@ exports.updateExpense = async (req, res, next) => {
     const { expenseId } = req.params;
     // Definition of validation schema
     const schema = Joi.object({
-      title: Joi.string().trim().required(),
-      paid_by: Joi.required(),
-      category: Joi.string().trim().required(),
-      expense_amount: Joi.number().positive().precision(2).required(),
-      shares: Joi.array().required(),
-      date: Joi.date().required(),
+      title: Joi.string().trim(),
+      paid_by: Joi.string(),
+      category: Joi.string().trim(),
+      expense_amount: Joi.number().positive().precision(2),
+      shares: Joi.array(),
+      date: Joi.date(),
     });
 
     // Get validation result
@@ -121,15 +123,11 @@ exports.updateExpense = async (req, res, next) => {
 
     // Check if total shares equals the expense amount
     const { shares, expense_amount } = validationResult;
-    const totalShares = shares.reduce(
-      (a, b) => a.share_amount + b.share_amount
-    );
+    const totalShares = shares.reduce((a, b) => a + b.share_amount, 0);
     if (totalShares !== expense_amount) {
-      return next(
-        createError.Forbidden(
-          'ERROR : Total shares must add up to expense amount'
-        )
-      );
+      return res
+        .status(403)
+        .json({ errorMessage: 'Total shares must add up to expense amount' });
     }
 
     // Update expense
@@ -142,10 +140,12 @@ exports.updateExpense = async (req, res, next) => {
     );
 
     if (!updatedExpense) {
-      return next(createError.BadRequest('ERROR : Expense was not updated'));
+      return res.status(400).json({
+        errorMessage: `Expense was not updated`,
+      });
     }
 
-    res.json(updatedExpense);
+    return res.status(200).json({ updatedExpense });
   } catch (err) {
     next(createError.InternalServerError(err.name + ' : ' + err.message));
   }

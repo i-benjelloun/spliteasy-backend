@@ -63,7 +63,7 @@ exports.createGroup = async (req, res, next) => {
     });
 
     if (!createdGroup) {
-      return res.status(404).json({ errorMessage: 'Group was not created' });
+      return res.status(400).json({ errorMessage: 'Group was not created' });
     }
 
     return res.status(201).json({ createdGroup });
@@ -197,6 +197,7 @@ exports.updateGroup = async (req, res, next) => {
   }
 };
 
+// Controller : get group balances
 exports.getBalances = async (req, res, next) => {
   try {
     const { groupId } = req.params;
