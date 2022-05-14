@@ -5,6 +5,7 @@ const Group = require('../models/Group.model');
 const { computeBalances } = require('../helpers/computeBalances');
 const { computeReimbursements } = require('../helpers/computeReimbursements');
 const User = require('../models/User.model');
+const CryptoJS = require('crypto-js');
 
 // Controller : get all groups where the user is a member
 exports.getGroups = async (req, res, next) => {
@@ -215,6 +216,39 @@ exports.getBalances = async (req, res, next) => {
     }
 
     return res.status(200).json({ balances, reimbursements });
+  } catch (err) {
+    next(createError.InternalServerError(err.name + ' : ' + err.message));
+  }
+};
+
+// Controller : join group
+exports.joinGroup = async (req, res, next) => {
+  try {
+    const { encryptedId } = req.params;
+
+    const decryptId = (str) => {
+      const decodedStr = decodeURIComponent(str);
+      return CryptoJS.AES.decrypt(
+        decodedStr,
+        process.env.CRYPTO_SECRET
+      ).toString(CryptoJS.enc.Utf8);
+    };
+
+    const decryptedId = decryptId(encryptedId);
+
+    const updatedGroup = await Group.findByIdAndUpdate(
+      decryptedId,
+      {
+        $addToSet: { members: [req.payload._id] },
+      },
+      { new: true }
+    );
+
+    if (!updatedGroup) {
+      return res.status(404).json({ errorMessage: 'Group not found' });
+    }
+
+    return res.status(200).json({ updatedGroup });
   } catch (err) {
     next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
