@@ -54,8 +54,6 @@ exports.createGroup = async (req, res, next) => {
       }
     }
 
-    console.log(groupMembers);
-
     // Create group
     const createdGroup = await Group.create({
       ...validationResult,
@@ -117,12 +115,6 @@ exports.getGroupById = async (req, res, next) => {
 exports.updateGroup = async (req, res, next) => {
   try {
     const { groupId } = req.params;
-    const group = await Group.findById(groupId);
-    if (req.payload._id !== group.owner.toString()) {
-      return res
-        .status(403)
-        .json({ errorMessage: 'Only group owner can update a group' });
-    }
 
     // Definition of validation schema
     const schema = Joi.object({
@@ -137,16 +129,14 @@ exports.updateGroup = async (req, res, next) => {
 
     // Validate members
     const groupMembers = [req.payload._id];
-    if (validationResult.members) {
-      for (let member of validationResult.members) {
-        const user = await User.findOne({ email: member });
-        if (user) {
-          groupMembers.push(user._id.toString());
-        } else {
-          return res
-            .status(400)
-            .json({ errorMessage: `${member} does not exist in database` });
-        }
+    for (let member of validationResult.members) {
+      const user = await User.findOne({ email: member });
+      if (user) {
+        groupMembers.push(user._id.toString());
+      } else {
+        return res
+          .status(400)
+          .json({ errorMessage: `${member} does not exist in database` });
       }
     }
 

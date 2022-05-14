@@ -8,6 +8,7 @@ const {
   joinGroup,
 } = require('../controllers/group.controllers');
 const { isGroupMember } = require('../middlewares/isGroupMember.middlewares');
+const { isGroupOwner } = require('../middlewares/isGroupOwner.middlewares');
 const { isAuthenticated } = require('../middlewares/jwt.middlewares');
 const router = require('express').Router();
 
@@ -24,7 +25,7 @@ router.delete('/:groupId', isAuthenticated, isGroupMember, deleteGroup);
 router.get('/:groupId', isAuthenticated, isGroupMember, getGroupById);
 
 // Route : update group
-router.patch('/:groupId', isAuthenticated, isGroupMember, updateGroup);
+router.patch('/:groupId', isAuthenticated, isGroupOwner, updateGroup);
 
 // Route : update group
 router.get('/:groupId/balances', isAuthenticated, isGroupMember, getBalances);
