@@ -27,7 +27,7 @@ exports.createExpense = async (req, res, next) => {
 
     // Definition of validation schema
     const schema = Joi.object({
-      title: Joi.string().trim().required(),
+      title: Joi.string().trim().required().length(50),
       paid_by: Joi.required(),
       category: Joi.string().trim().required(),
       expense_amount: Joi.number().positive().precision(2).required(),
@@ -111,7 +111,7 @@ exports.updateExpense = async (req, res, next) => {
     const { expenseId } = req.params;
     // Definition of validation schema
     const schema = Joi.object({
-      title: Joi.string().trim(),
+      title: Joi.string().trim().length(50),
       paid_by: Joi.string(),
       category: Joi.string().trim(),
       expense_amount: Joi.number().positive().precision(2),
