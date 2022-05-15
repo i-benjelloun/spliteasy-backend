@@ -9,6 +9,7 @@ const {
   archiveGroup,
   restoreGroup,
 } = require('../controllers/group.controllers');
+const { idValidation } = require('../middlewares/IdValidation.middlewares');
 const { isGroupMember } = require('../middlewares/isGroupMember.middlewares');
 const { isGroupOwner } = require('../middlewares/isGroupOwner.middlewares');
 const { isAuthenticated } = require('../middlewares/jwt.middlewares');
@@ -21,23 +22,54 @@ router.get('/', isAuthenticated, getGroups);
 router.post('/', isAuthenticated, createGroup);
 
 // Route : delete group
-router.delete('/:groupId', isAuthenticated, isGroupMember, deleteGroup);
+router.delete(
+  '/:groupId',
+  idValidation,
+  isAuthenticated,
+  isGroupMember,
+  deleteGroup
+);
 
 // Route : delete group
-router.get('/:groupId', isAuthenticated, isGroupMember, getGroupById);
+router.get(
+  '/:groupId',
+  idValidation,
+  isAuthenticated,
+  isGroupMember,
+  getGroupById
+);
 
 // Route : update group
-router.patch('/:groupId', isAuthenticated, isGroupOwner, updateGroup);
+router.patch(
+  '/:groupId',
+  idValidation,
+  isAuthenticated,
+  isGroupOwner,
+  updateGroup
+);
 
 // Route : update group
-router.get('/:groupId/balances', isAuthenticated, isGroupMember, getBalances);
+router.get(
+  '/:groupId/balances',
+  idValidation,
+  isAuthenticated,
+  isGroupMember,
+  getBalances
+);
 
 // Route : archive group
-router.post('/:groupId/archive', isAuthenticated, isGroupMember, archiveGroup);
+router.post(
+  '/:groupId/archive',
+  idValidation,
+  isAuthenticated,
+  isGroupMember,
+  archiveGroup
+);
 
 // Route : archive group
 router.delete(
   '/:groupId/restore',
+  idValidation,
   isAuthenticated,
   isGroupMember,
   restoreGroup

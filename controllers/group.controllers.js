@@ -13,7 +13,7 @@ exports.getGroups = async (req, res, next) => {
   try {
     const { _id: userId } = req.payload;
 
-    const groups = await Group.find({ members: userId }).populate(
+    let groups = await Group.find({ members: userId }).populate(
       'members',
       '-password'
     );
@@ -28,7 +28,18 @@ exports.getGroups = async (req, res, next) => {
       return res.status(404).json({ errorMessage: 'Archives not found' });
     }
 
-    return res.status(200).json({ groups, archivedGroups });
+    const archivedGroupsIds = archivedGroups?.map((archive) =>
+      archive.group.toString()
+    );
+
+    groups = groups.map((group) => ({
+      ...group._doc,
+      isArchived: archivedGroupsIds.includes(group._id.toString())
+        ? true
+        : false,
+    }));
+
+    return res.status(200).json({ groups });
   } catch (err) {
     next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
@@ -39,7 +50,7 @@ exports.createGroup = async (req, res, next) => {
   try {
     // Definition of validation schema
     const schema = Joi.object({
-      title: Joi.string().trim().required(),
+      title: Joi.string().trim().required().length(50),
       category: Joi.string().trim().required(),
       currency: Joi.string().trim().required(),
       members: Joi.array().required(),
@@ -125,7 +136,7 @@ exports.updateGroup = async (req, res, next) => {
 
     // Definition of validation schema
     const schema = Joi.object({
-      title: Joi.string().trim(),
+      title: Joi.string().trim().length(50),
       category: Joi.string().trim(),
       members: Joi.array(),
     });

@@ -1,30 +1,25 @@
 const createError = require('http-errors');
-const { isValidId } = require('../helpers/isValidId');
 const Group = require('../models/Group.model');
 
 exports.isGroupMember = async (req, res, next) => {
   const { _id: userId } = req.payload;
   const { groupId } = req.params;
 
-  if (!isValidId(groupId)) {
-    return res.status(404).json({ errorMessage: 'Resource not found' });
-  } else {
-    try {
-      const group = await Group.findById(groupId);
+  try {
+    const group = await Group.findById(groupId);
 
-      if (!group) {
-        return res.status(404).json({ errorMessage: 'Resource not found' });
-      }
-
-      if (group?.members.includes(userId)) {
-        next();
-      } else {
-        return res
-          .status(403)
-          .json({ errorMessage: 'Unauthorized access to resource' });
-      }
-    } catch (err) {
-      next(createError.InternalServerError(err.name + ' : ' + err.message));
+    if (!group) {
+      return res.status(404).json({ errorMessage: 'Resource not found' });
     }
+
+    if (group?.members.includes(userId)) {
+      next();
+    } else {
+      return res
+        .status(403)
+        .json({ errorMessage: 'Unauthorized access to resource' });
+    }
+  } catch (err) {
+    next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
 };
