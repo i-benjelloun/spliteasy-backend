@@ -226,19 +226,22 @@ exports.joinGroup = async (req, res, next) => {
 
     const decryptedId = decryptId(encryptedId);
 
-    const updatedGroup = await Group.findByIdAndUpdate(
-      decryptedId,
-      {
-        $addToSet: { members: [req.payload._id] },
-      },
-      { new: true }
-    );
-
-    if (!updatedGroup) {
+    if (!isValidId(decryptedId)) {
       return res.status(404).json({ errorMessage: 'Group not found' });
-    }
+    } else {
+      const updatedGroup = await Group.findByIdAndUpdate(
+        decryptedId,
+        {
+          $addToSet: { members: [req.payload._id] },
+        },
+        { new: true }
+      );
 
-    return res.status(200).json({ updatedGroup });
+      if (!updatedGroup) {
+        return res.status(404).json({ errorMessage: 'Group not found' });
+      }
+      return res.status(200).json({ updatedGroup });
+    }
   } catch (err) {
     next(createError.InternalServerError(err.name + ' : ' + err.message));
   }

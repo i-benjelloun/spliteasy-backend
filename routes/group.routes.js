@@ -16,7 +16,7 @@ const router = require('express').Router();
 router.get('/', isAuthenticated, getGroups);
 
 // Route : create group
-router.post('/', isAuthenticated, isGroupMember, createGroup);
+router.post('/', isAuthenticated, createGroup);
 
 // Route : delete group
 router.delete('/:groupId', isAuthenticated, isGroupMember, deleteGroup);
