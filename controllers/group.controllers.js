@@ -6,22 +6,30 @@ const { computeBalances } = require('../helpers/computeBalances');
 const { computeReimbursements } = require('../helpers/computeReimbursements');
 const User = require('../models/User.model');
 const CryptoJS = require('crypto-js');
+const Archive = require('../models/Archive.model');
 
 // Controller : get all groups where the user is a member
 exports.getGroups = async (req, res, next) => {
   try {
-    const groups = await Group.find({ members: req.payload._id }).populate(
+    const { _id: userId } = req.payload;
+
+    const groups = await Group.find({ members: userId }).populate(
       'members',
       '-password'
     );
+
+    const archivedGroups = await Archive.find({ user: userId });
 
     if (!groups) {
       return res.status(404).json({ errorMessage: 'Groups not found' });
     }
 
-    return res.status(200).json({ groups });
+    if (!archivedGroups) {
+      return res.status(404).json({ errorMessage: 'Archives not found' });
+    }
+
+    return res.status(200).json({ groups, archivedGroups });
   } catch (err) {
-    console.log(err);
     next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
 };
@@ -34,7 +42,6 @@ exports.createGroup = async (req, res, next) => {
       title: Joi.string().trim().required(),
       category: Joi.string().trim().required(),
       currency: Joi.string().trim().required(),
-      isArchived: Joi.bool(),
       members: Joi.array().required(),
     });
 
@@ -120,7 +127,6 @@ exports.updateGroup = async (req, res, next) => {
     const schema = Joi.object({
       title: Joi.string().trim(),
       category: Joi.string().trim(),
-      isArchived: Joi.bool(),
       members: Joi.array(),
     });
 
@@ -241,6 +247,56 @@ exports.joinGroup = async (req, res, next) => {
         return res.status(404).json({ errorMessage: 'Group not found' });
       }
       return res.status(200).json({ updatedGroup });
+    }
+  } catch (err) {
+    next(createError.InternalServerError(err.name + ' : ' + err.message));
+  }
+};
+
+// Controller : archive group
+exports.archiveGroup = async (req, res, next) => {
+  try {
+    const { groupId: groupId } = req.params;
+    const { _id: userId } = req.payload;
+
+    const archivedGroup = await Archive.create({
+      user: userId,
+      group: groupId,
+    });
+
+    if (!archivedGroup) {
+      return res.status(400).json({ errorMessage: 'Group was not archived' });
+    } else {
+      return res.status(200).json({ archivedGroup });
+    }
+  } catch (err) {
+    if (err.code === 11000) {
+      return res
+        .status(403)
+        .json({ errorMessage: 'Group is already archived' });
+    } else {
+      next(createError.InternalServerError(err.name + ' : ' + err.message));
+    }
+  }
+};
+
+// Controller : archive group
+exports.restoreGroup = async (req, res, next) => {
+  try {
+    const { groupId: group } = req.params;
+    const { _id: user } = req.payload;
+
+    const restoredGroup = await Archive.findOneAndDelete({
+      user: user,
+      group: group,
+    });
+
+    if (!restoredGroup) {
+      return res
+        .status(400)
+        .json({ errorMessage: 'Group is already restored restored' });
+    } else {
+      return res.status(200).json({ restoredGroup });
     }
   } catch (err) {
     next(createError.InternalServerError(err.name + ' : ' + err.message));

@@ -6,6 +6,8 @@ const {
   updateGroup,
   getBalances,
   joinGroup,
+  archiveGroup,
+  restoreGroup,
 } = require('../controllers/group.controllers');
 const { isGroupMember } = require('../middlewares/isGroupMember.middlewares');
 const { isGroupOwner } = require('../middlewares/isGroupOwner.middlewares');
@@ -29,6 +31,17 @@ router.patch('/:groupId', isAuthenticated, isGroupOwner, updateGroup);
 
 // Route : update group
 router.get('/:groupId/balances', isAuthenticated, isGroupMember, getBalances);
+
+// Route : archive group
+router.post('/:groupId/archive', isAuthenticated, isGroupMember, archiveGroup);
+
+// Route : archive group
+router.delete(
+  '/:groupId/restore',
+  isAuthenticated,
+  isGroupMember,
+  restoreGroup
+);
 
 router.patch('/:encryptedId/join', isAuthenticated, joinGroup);
 

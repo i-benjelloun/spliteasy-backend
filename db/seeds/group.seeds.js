@@ -13,7 +13,6 @@ exports.createGroup = async () => {
       owner: alper._id,
       category: 'Event',
       currency: 'EUR',
-      IsArchived: false,
       members: [alper._id, ibrahim._id, john._id, jane._id],
     },
     {
@@ -21,7 +20,6 @@ exports.createGroup = async () => {
       owner: ibrahim._id,
       category: 'Trip',
       currency: 'EUR',
-      IsArchived: false,
       members: [ibrahim._id, alper._id, jane._id],
     },
   ];
