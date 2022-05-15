@@ -5,6 +5,7 @@ const Group = require('../models/Group.model');
 const { computeBalances } = require('../helpers/computeBalances');
 const { computeReimbursements } = require('../helpers/computeReimbursements');
 const User = require('../models/User.model');
+const CryptoJS = require('crypto-js');
 
 // Controller : get all groups where the user is a member
 exports.getGroups = async (req, res, next) => {
@@ -52,8 +53,6 @@ exports.createGroup = async (req, res, next) => {
           .json({ errorMessage: `${member} does not exist in database` });
       }
     }
-
-    console.log(groupMembers);
 
     // Create group
     const createdGroup = await Group.create({
@@ -116,12 +115,6 @@ exports.getGroupById = async (req, res, next) => {
 exports.updateGroup = async (req, res, next) => {
   try {
     const { groupId } = req.params;
-    const group = await Group.findById(groupId);
-    if (req.payload._id !== group.owner.toString()) {
-      return res
-        .status(403)
-        .json({ errorMessage: 'Only group owner can update a group' });
-    }
 
     // Definition of validation schema
     const schema = Joi.object({
@@ -136,16 +129,14 @@ exports.updateGroup = async (req, res, next) => {
 
     // Validate members
     const groupMembers = [req.payload._id];
-    if (validationResult.members) {
-      for (let member of validationResult.members) {
-        const user = await User.findOne({ email: member });
-        if (user) {
-          groupMembers.push(user._id.toString());
-        } else {
-          return res
-            .status(400)
-            .json({ errorMessage: `${member} does not exist in database` });
-        }
+    for (let member of validationResult.members) {
+      const user = await User.findOne({ email: member });
+      if (user) {
+        groupMembers.push(user._id.toString());
+      } else {
+        return res
+          .status(400)
+          .json({ errorMessage: `${member} does not exist in database` });
       }
     }
 
@@ -215,6 +206,42 @@ exports.getBalances = async (req, res, next) => {
     }
 
     return res.status(200).json({ balances, reimbursements });
+  } catch (err) {
+    next(createError.InternalServerError(err.name + ' : ' + err.message));
+  }
+};
+
+// Controller : join group
+exports.joinGroup = async (req, res, next) => {
+  try {
+    const { encryptedId } = req.params;
+
+    const decryptId = (str) => {
+      const decodedStr = decodeURIComponent(str);
+      return CryptoJS.AES.decrypt(
+        decodedStr,
+        process.env.CRYPTO_SECRET
+      ).toString(CryptoJS.enc.Utf8);
+    };
+
+    const decryptedId = decryptId(encryptedId);
+
+    if (!isValidId(decryptedId)) {
+      return res.status(404).json({ errorMessage: 'Group not found' });
+    } else {
+      const updatedGroup = await Group.findByIdAndUpdate(
+        decryptedId,
+        {
+          $addToSet: { members: [req.payload._id] },
+        },
+        { new: true }
+      );
+
+      if (!updatedGroup) {
+        return res.status(404).json({ errorMessage: 'Group not found' });
+      }
+      return res.status(200).json({ updatedGroup });
+    }
   } catch (err) {
     next(createError.InternalServerError(err.name + ' : ' + err.message));
   }

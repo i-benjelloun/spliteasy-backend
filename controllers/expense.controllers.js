@@ -1,6 +1,7 @@
 const Joi = require('joi');
 const createError = require('http-errors');
 const Expense = require('../models/Expense.model');
+const { validateExpense } = require('../helpers/validateExpense');
 
 // Controller : get expenses for a specific group
 exports.getExpenses = async (req, res, next) => {
@@ -39,8 +40,8 @@ exports.createExpense = async (req, res, next) => {
 
     // Check if total shares equals the expense amount
     const { shares, expense_amount } = validationResult;
-    const totalShares = shares.reduce((a, b) => a + b.share_amount, 0);
-    if (totalShares !== expense_amount) {
+
+    if (!validateExpense(expense_amount, shares)) {
       return res
         .status(403)
         .json({ errorMessage: 'Total shares must add up to expense amount' });
