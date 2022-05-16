@@ -2,8 +2,9 @@ const { Schema, model } = require('mongoose');
 const createError = require('http-errors');
 const User = require('./User.model');
 const Expense = require('./Expense.model');
-const { currency_codes } = require('../helpers/currencies');
+const Comment = require('./Comment.model');
 const Archive = require('./Archive.model');
+const { currency_codes } = require('../helpers/currencies');
 
 const groupSchema = new Schema({
   title: { type: String, required: true },
@@ -26,31 +27,21 @@ const groupSchema = new Schema({
   },
 });
 
-// Delete all group expenses & shares before deleting group
-groupSchema.pre('findOneAndDelete', async function (next) {
-  try {
-    const groupId = this.getQuery()['_id'];
-    await Expense.deleteMany({ group: groupId });
-    next();
-  } catch (err) {
-    next(
-      createError.InternalServerError('Group expenses could not be deleted')
-    );
-  }
-});
-
 // Delete archives related to this group when deleting it
 groupSchema.pre('findOneAndDelete', async function (next) {
   try {
     const groupId = this.getQuery()['_id'];
+    const expenses = await Expense.find({ group: groupId });
+    const expensesIds = expenses.map((expense) => {
+      return expense._id;
+    });
+
+    await Comment.deleteMany({ expense: { $in: expensesIds } });
+    await Expense.deleteMany({ group: groupId });
     await Archive.deleteMany({ group: groupId });
     next();
   } catch (err) {
-    next(
-      createError.InternalServerError(
-        'Error in deleting archives related to the group'
-      )
-    );
+    next(createError.BadRequest('Group was not deleted'));
   }
 });
 

@@ -50,7 +50,7 @@ exports.createGroup = async (req, res, next) => {
   try {
     // Definition of validation schema
     const schema = Joi.object({
-      title: Joi.string().trim().required().length(50),
+      title: Joi.string().trim().required().max(50),
       category: Joi.string().trim().required(),
       currency: Joi.string().trim().required(),
       members: Joi.array().required(),
@@ -136,7 +136,7 @@ exports.updateGroup = async (req, res, next) => {
 
     // Definition of validation schema
     const schema = Joi.object({
-      title: Joi.string().trim().length(50),
+      title: Joi.string().trim().max(50),
       category: Joi.string().trim(),
       members: Joi.array(),
     });

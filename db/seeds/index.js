@@ -8,6 +8,7 @@ const { createUser } = require('./user.seeds.js');
 const { createGroup } = require('./group.seeds.js');
 const { createExpense } = require('./expense.seeds.js');
 const Archive = require('../../models/Archive.model.js');
+const Comment = require('../../models/Comment.model.js');
 
 // Connect to database
 require('../../db');
@@ -16,6 +17,7 @@ require('../../db');
 const seedDB = async function () {
   try {
     await Archive.deleteMany();
+    await Comment.deleteMany();
 
     await User.deleteMany();
     await createUser();
