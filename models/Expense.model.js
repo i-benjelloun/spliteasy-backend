@@ -1,5 +1,7 @@
+const createError = require('http-errors');
 const { default: mongoose } = require('mongoose');
 const { Schema, model } = require('mongoose');
+const Comment = require('./Comment.model');
 
 const expenseSchema = new Schema(
   {
@@ -54,6 +56,20 @@ const expenseSchema = new Schema(
     timestamps: true,
   }
 );
+
+expenseSchema.pre('findOneAndDelete', async function (next) {
+  try {
+    const expenseId = this.getQuery()['_id'];
+    await Comment.deleteMany({ expense: expenseId });
+    next();
+  } catch (err) {
+    next(
+      createError.InternalServerError(
+        'Error in deleting comment related to the expense'
+      )
+    );
+  }
+});
 
 const Expense = model('Expense', expenseSchema);
 

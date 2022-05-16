@@ -7,14 +7,13 @@ const { validateExpense } = require('../helpers/validateExpense');
 exports.getExpenses = async (req, res, next) => {
   try {
     const { groupId } = req.params;
-    const expenses = await Expense.find({ group: groupId }).populate(
-      'paid_by',
-      '-password'
-    );
+    const expenses = await Expense.find({ group: groupId })
+      .populate('paid_by', '-password')
+      .sort({ date: -1 });
     if (!expenses) {
       return res.status(404).json({ errorMessage: 'Expenses not found' });
     }
-    res.status(200).json({ expenses });
+    return res.status(200).json({ expenses });
   } catch (err) {
     next(createError.InternalServerError(err.name + ' : ' + err.message));
   }
@@ -27,7 +26,7 @@ exports.createExpense = async (req, res, next) => {
 
     // Definition of validation schema
     const schema = Joi.object({
-      title: Joi.string().trim().required().length(50),
+      title: Joi.string().trim().required().max(50),
       paid_by: Joi.required(),
       category: Joi.string().trim().required(),
       expense_amount: Joi.number().positive().precision(2).required(),
@@ -70,7 +69,7 @@ exports.deleteExpense = async (req, res, next) => {
   try {
     const deletedExpense = await Expense.findOneAndDelete({ _id: expenseId });
     if (!deletedExpense) {
-      return res.status(404).json({ errorMessage: 'Expense not found' });
+      return res.status(400).json({ errorMessage: 'Expense was not deleted' });
     }
     return res.status(200).json({ deletedExpense });
   } catch (err) {
@@ -109,9 +108,9 @@ exports.getExpenseById = async (req, res, next) => {
 exports.updateExpense = async (req, res, next) => {
   try {
     const { expenseId } = req.params;
-    // Definition of validation schema
+
     const schema = Joi.object({
-      title: Joi.string().trim().length(50),
+      title: Joi.string().trim().max(50),
       paid_by: Joi.string(),
       category: Joi.string().trim(),
       expense_amount: Joi.number().positive().precision(2),
