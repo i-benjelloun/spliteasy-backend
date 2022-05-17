@@ -5,7 +5,7 @@ const {
   getExpenseById,
   updateExpense,
 } = require('../controllers/expense.controllers');
-const { idValidation } = require('../middlewares/IdValidation.middlewares');
+const { idValidation } = require('../middlewares/idValidation.middlewares');
 const { isGroupMember } = require('../middlewares/isGroupMember.middlewares');
 
 const { isAuthenticated } = require('../middlewares/jwt.middlewares');

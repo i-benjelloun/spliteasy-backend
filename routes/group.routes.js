@@ -9,7 +9,7 @@ const {
   archiveGroup,
   restoreGroup,
 } = require('../controllers/group.controllers');
-const { idValidation } = require('../middlewares/IdValidation.middlewares');
+const { idValidation } = require('../middlewares/idValidation.middlewares');
 const { isGroupMember } = require('../middlewares/isGroupMember.middlewares');
 const { isGroupOwner } = require('../middlewares/isGroupOwner.middlewares');
 const { isAuthenticated } = require('../middlewares/jwt.middlewares');
