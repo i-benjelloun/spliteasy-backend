@@ -26,6 +26,11 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
+    isTemp: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
   },
   {
     timestamps: true,
