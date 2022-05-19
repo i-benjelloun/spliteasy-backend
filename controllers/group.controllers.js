@@ -75,6 +75,7 @@ exports.createGroup = async (req, res, next) => {
       return res.status(400).json({ errorMessage: 'Group was not created' });
     }
 
+    // Update the joinLink
     const groupId = createdGroup._id;
     const encryptedId = encryptId(groupId.toString());
     await Group.findByIdAndUpdate(groupId, {
@@ -209,7 +210,7 @@ exports.updateGroup = async (req, res, next) => {
         members: groupMembers,
       },
       { new: true }
-    );
+    ).populate('owner', '-password');
 
     if (!updatedGroup) {
       return res.status(400).json({
@@ -219,7 +220,12 @@ exports.updateGroup = async (req, res, next) => {
 
     const populatedMembers = await User.find({ _id: { $in: groupMembers } });
 
-    // notify('ibenjelloun93@gmail.com');
+    // populatedMembers.slice(1).forEach((member) => {
+    //   console.log(member);
+    //   notify(member, updatedGroup, populatedMembers[0]);
+    // });
+
+    notify(populatedMembers, updatedGroup);
 
     return res.status(200).json({ updatedGroup });
   } catch (err) {
