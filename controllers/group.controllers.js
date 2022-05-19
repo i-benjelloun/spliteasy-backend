@@ -219,12 +219,6 @@ exports.updateGroup = async (req, res, next) => {
     }
 
     const populatedMembers = await User.find({ _id: { $in: groupMembers } });
-
-    // populatedMembers.slice(1).forEach((member) => {
-    //   console.log(member);
-    //   notify(member, updatedGroup, populatedMembers[0]);
-    // });
-
     notify(populatedMembers, updatedGroup);
 
     return res.status(200).json({ updatedGroup });

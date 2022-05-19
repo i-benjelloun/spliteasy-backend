@@ -44,6 +44,7 @@ const signupController = async (req, res, next) => {
           firstName,
           lastName,
           password: hashedPassword,
+          isTemp: false,
         });
 
         res.status(201).json({
@@ -55,7 +56,6 @@ const signupController = async (req, res, next) => {
         });
       }
     } else {
-      // Create the new user in the database
       const createdUser = await User.create({
         firstName,
         lastName,
@@ -88,7 +88,7 @@ const loginController = async (req, res, next) => {
     // Check the users collection if a user with the same email exists
     const foundUser = await User.findOne({ email });
 
-    if (!foundUser) {
+    if (!foundUser || foundUser.isTemp) {
       // If the user is not found, send an error response
       return res.status(400).json({ errorMessage: 'Wrong crendentials.' });
     } else {
