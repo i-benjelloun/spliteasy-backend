@@ -5,6 +5,7 @@ const Expense = require('./Expense.model');
 const Comment = require('./Comment.model');
 const Archive = require('./Archive.model');
 const { currency_codes } = require('../helpers/currencies');
+const { encryptId } = require('../helpers/encryptId');
 
 const groupSchema = new Schema({
   title: { type: String, required: true },
@@ -24,6 +25,10 @@ const groupSchema = new Schema({
   members: {
     type: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     required: true,
+  },
+  joinLink: {
+    type: String,
+    default: '',
   },
 });
 
@@ -53,11 +58,13 @@ groupSchema.post('save', async function (doc, next) {
       const newFriends = groupMembers.filter((m) => {
         return !m.equals(member);
       });
+
       await User.findByIdAndUpdate(member, {
         $addToSet: { friends: newFriends },
       });
     }
   } catch (err) {
+    console.log(err);
     next(createError.InternalServerError('Error in updating users friends'));
   }
 });

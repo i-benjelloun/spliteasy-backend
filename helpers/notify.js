@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
 
-exports.notify = (sender, recipient, group, joinLink) => {
+exports.notify = (members, group, joinLink) => {
   // Create the transporter with the required configuration for Outlook
   // change the user and pass !
   var transporter = nodemailer.createTransport({
