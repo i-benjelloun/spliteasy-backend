@@ -5,11 +5,10 @@ const Group = require('../models/Group.model');
 const { computeBalances } = require('../helpers/computeBalances');
 const { computeReimbursements } = require('../helpers/computeReimbursements');
 const User = require('../models/User.model');
-const CryptoJS = require('crypto-js');
 const Archive = require('../models/Archive.model');
 const bcrypt = require('bcryptjs');
 const { notify } = require('../helpers/notify');
-const { encryptId } = require('../helpers/encryptId');
+const { isValidId } = require('../helpers/isValidId');
 const saltRounds = 12;
 
 // Controller : get all groups where the user is a member
@@ -248,23 +247,13 @@ exports.getBalances = async (req, res, next) => {
 // Controller : join group
 exports.joinGroup = async (req, res, next) => {
   try {
-    const { encryptedId } = req.params;
+    const { groupId } = req.params;
 
-    const decryptId = (str) => {
-      const decodedStr = decodeURIComponent(str);
-      return CryptoJS.AES.decrypt(
-        decodedStr,
-        process.env.CRYPTO_SECRET
-      ).toString(CryptoJS.enc.Utf8);
-    };
-
-    const decryptedId = decryptId(encryptedId);
-
-    if (!isValidId(decryptedId)) {
+    if (!isValidId(groupId)) {
       return res.status(404).json({ errorMessage: 'Group not found' });
     } else {
       const updatedGroup = await Group.findByIdAndUpdate(
-        decryptedId,
+        groupId,
         {
           $addToSet: { members: [req.payload._id] },
         },

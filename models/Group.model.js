@@ -5,8 +5,6 @@ const Expense = require('./Expense.model');
 const Comment = require('./Comment.model');
 const Archive = require('./Archive.model');
 const { currency_codes } = require('../helpers/currencies');
-const { encryptId } = require('../helpers/encryptId');
-const CryptoJS = require('crypto-js');
 require('dotenv/config');
 
 const groupSchema = new Schema({
@@ -36,9 +34,7 @@ const groupSchema = new Schema({
 
 groupSchema.pre('save', async function (next) {
   try {
-    const groupId = this._id;
-    const encryptedId = encryptId(groupId.toString());
-    this.joinLink = `${process.env.ORIGIN}/${encryptedId}/join`;
+    this.joinLink = `${process.env.ORIGIN}/join/${this._id.toString()}`;
   } catch (err) {
     next(createError.BadRequest('JoinLink was not created'));
   }
@@ -52,7 +48,6 @@ groupSchema.pre('findOneAndDelete', async function (next) {
     const expensesIds = expenses.map((expense) => {
       return expense._id;
     });
-
     await Comment.deleteMany({ expense: { $in: expensesIds } });
     await Expense.deleteMany({ group: groupId });
     await Archive.deleteMany({ group: groupId });

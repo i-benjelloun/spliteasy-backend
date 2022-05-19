@@ -75,6 +75,4 @@ router.delete(
   restoreGroup
 );
 
-router.patch('/:encryptedId/join', isAuthenticated, joinGroup);
-
 module.exports = router;
