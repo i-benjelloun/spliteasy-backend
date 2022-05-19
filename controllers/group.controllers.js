@@ -75,13 +75,6 @@ exports.createGroup = async (req, res, next) => {
       return res.status(400).json({ errorMessage: 'Group was not created' });
     }
 
-    // Update the joinLink
-    const groupId = createdGroup._id;
-    const encryptedId = encryptId(groupId.toString());
-    await Group.findByIdAndUpdate(groupId, {
-      joinLink: `${process.env.ORIGIN}/${encryptedId}/join`,
-    });
-
     return res.status(201).json({ createdGroup });
   } catch (err) {
     next(createError.InternalServerError(err.name + ' : ' + err.message));

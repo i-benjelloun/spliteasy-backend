@@ -6,6 +6,8 @@ const Comment = require('./Comment.model');
 const Archive = require('./Archive.model');
 const { currency_codes } = require('../helpers/currencies');
 const { encryptId } = require('../helpers/encryptId');
+const CryptoJS = require('crypto-js');
+require('dotenv/config');
 
 const groupSchema = new Schema({
   title: { type: String, required: true },
@@ -30,6 +32,16 @@ const groupSchema = new Schema({
     type: String,
     default: '',
   },
+});
+
+groupSchema.pre('save', async function (next) {
+  try {
+    const groupId = this._id;
+    const encryptedId = encryptId(groupId.toString());
+    this.joinLink = `${process.env.ORIGIN}/${encryptedId}/join`;
+  } catch (err) {
+    next(createError.BadRequest('JoinLink was not created'));
+  }
 });
 
 // Delete archives related to this group when deleting it
