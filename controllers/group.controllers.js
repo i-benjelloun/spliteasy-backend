@@ -8,6 +8,7 @@ const User = require('../models/User.model');
 const CryptoJS = require('crypto-js');
 const Archive = require('../models/Archive.model');
 const bcrypt = require('bcryptjs');
+const { notify } = require('../helpers/notify');
 const saltRounds = 12;
 
 // Controller : get all groups where the user is a member
@@ -167,6 +168,8 @@ exports.updateGroup = async (req, res, next) => {
         }
       }
     }
+
+    // notify('ibenjelloun93@gmail.com');
 
     // Can't remove a member who was involved in at least one expense
     // const groupExpenses = await Expense.find({ group: groupId });
