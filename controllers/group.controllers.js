@@ -48,35 +48,37 @@ exports.getGroups = async (req, res, next) => {
 // Controller : create new group
 exports.createGroup = async (req, res, next) => {
   try {
+    const { _id: userId } = req.payload;
+
     // Definition of validation schema
     const schema = Joi.object({
       title: Joi.string().trim().required().max(50),
       category: Joi.string().trim().required(),
       currency: Joi.string().trim().required(),
-      members: Joi.array().required(),
+      // members: Joi.array().required(),
     });
 
     // Get validation result
     const validationResult = await schema.validateAsync(req.body);
 
     // Validate members
-    const groupMembers = [req.payload._id];
-    for (let member of validationResult.members) {
-      const user = await User.findOne({ email: member });
-      if (user) {
-        groupMembers.push(user._id.toString());
-      } else {
-        return res
-          .status(400)
-          .json({ errorMessage: `${member} does not exist in database` });
-      }
-    }
+    const groupMembers = [userId];
+    // for (let member of validationResult.members) {
+    //   const user = await User.findOne({ email: member });
+    //   if (user) {
+    //     groupMembers.push(user._id.toString());
+    //   } else {
+    //     return res
+    //       .status(400)
+    //       .json({ errorMessage: `${member} does not exist in database` });
+    //   }
+    // }
 
     // Create group
     const createdGroup = await Group.create({
       ...validationResult,
       members: groupMembers,
-      owner: req.payload._id,
+      owner: userId,
     });
 
     if (!createdGroup) {
@@ -133,6 +135,7 @@ exports.getGroupById = async (req, res, next) => {
 exports.updateGroup = async (req, res, next) => {
   try {
     const { groupId } = req.params;
+    const { _id: userId } = req.payload;
 
     // Definition of validation schema
     const schema = Joi.object({
@@ -145,43 +148,46 @@ exports.updateGroup = async (req, res, next) => {
     const validationResult = await schema.validateAsync(req.body);
 
     // Validate members
-    const groupMembers = [req.payload._id];
-    for (let member of validationResult.members) {
-      const user = await User.findOne({ email: member });
-      if (user) {
-        groupMembers.push(user._id.toString());
-      } else {
-        return res
-          .status(400)
-          .json({ errorMessage: `${member} does not exist in database` });
-      }
-    }
+    const groupMembers = [userId];
 
-    // Can't remove a member who was involved in at least one expense
-    const groupExpenses = await Expense.find({ group: groupId });
-    const currentGroup = await Group.findById(groupId);
-
-    for (let member of currentGroup.members) {
-      // Perform verifications on deleted members only
-      if (!groupMembers.includes(member.toString())) {
-        // Expenses where deleted member was involved
-        const memberExpenses = groupExpenses.filter((exp) => {
-          return (
-            exp.paid_by.equals(member) ||
-            exp.shares.filter((share) => {
-              return share.shared_with.equals(member);
-            }).length !== 0
-          );
-        });
-
-        // If member was involved in an expense return an error
-        if (memberExpenses.length > 0) {
-          return res.status(403).json({
-            errorMessage: `Can't remove a member who was involved in at least one expense`,
+    if (validationResult.members) {
+      for (let member of validationResult.members) {
+        const user = await User.findOne({ email: member.email });
+        if (user) {
+          groupMembers.push(user._id.toString());
+        } else {
+          return res.status(400).json({
+            errorMessage: `${member.email} does not exist in database`,
           });
         }
       }
     }
+
+    // Can't remove a member who was involved in at least one expense
+    // const groupExpenses = await Expense.find({ group: groupId });
+    // const currentGroup = await Group.findById(groupId);
+
+    // for (let member of currentGroup.members) {
+    //   // Perform verifications on deleted members only
+    //   if (!groupMembers.includes(member.toString())) {
+    //     // Expenses where deleted member was involved
+    //     const memberExpenses = groupExpenses.filter((exp) => {
+    //       return (
+    //         exp.paid_by.equals(member) ||
+    //         exp.shares.filter((share) => {
+    //           return share.shared_with.equals(member);
+    //         }).length !== 0
+    //       );
+    //     });
+
+    //     // If member was involved in an expense return an error
+    //     if (memberExpenses.length > 0) {
+    //       return res.status(403).json({
+    //         errorMessage: `Can't remove a member who was involved in at least one expense`,
+    //       });
+    //     }
+    //   }
+    // }
 
     // Update group
     const updatedGroup = await Group.findByIdAndUpdate(
