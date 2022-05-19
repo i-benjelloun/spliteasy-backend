@@ -7,6 +7,8 @@ const { computeReimbursements } = require('../helpers/computeReimbursements');
 const User = require('../models/User.model');
 const CryptoJS = require('crypto-js');
 const Archive = require('../models/Archive.model');
+const bcrypt = require('bcryptjs');
+const saltRounds = 12;
 
 // Controller : get all groups where the user is a member
 exports.getGroups = async (req, res, next) => {
@@ -156,9 +158,25 @@ exports.updateGroup = async (req, res, next) => {
         if (user) {
           groupMembers.push(user._id.toString());
         } else {
-          return res.status(400).json({
-            errorMessage: `${member.email} does not exist in database`,
+          // Create temporary user
+          const salt = bcrypt.genSaltSync(saltRounds);
+          const hashedPassword = bcrypt.hashSync('Password1', salt);
+
+          const tempUser = await User.create({
+            firstName: member.firstName,
+            lastName: member.lastName,
+            email: member.email,
+            password: hashedPassword,
+            isTemp: true,
           });
+
+          if (tempUser) {
+            groupMembers.push(tempUser._id.toString());
+          } else {
+            return res.status(400).json({
+              errorMessage: `An error occured while adding ${member.firstName} to the group.`,
+            });
+          }
         }
       }
     }
