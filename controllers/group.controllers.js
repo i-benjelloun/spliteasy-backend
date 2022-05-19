@@ -63,23 +63,10 @@ exports.createGroup = async (req, res, next) => {
     // Get validation result
     const validationResult = await schema.validateAsync(req.body);
 
-    // Validate members
-    const groupMembers = [userId];
-    // for (let member of validationResult.members) {
-    //   const user = await User.findOne({ email: member });
-    //   if (user) {
-    //     groupMembers.push(user._id.toString());
-    //   } else {
-    //     return res
-    //       .status(400)
-    //       .json({ errorMessage: `${member} does not exist in database` });
-    //   }
-    // }
-
     // Create group
     const createdGroup = await Group.create({
       ...validationResult,
-      members: groupMembers,
+      members: [userId],
       owner: userId,
     });
 
