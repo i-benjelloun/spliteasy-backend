@@ -210,7 +210,9 @@ exports.updateGroup = async (req, res, next) => {
         members: groupMembers,
       },
       { new: true }
-    ).populate('owner', '-password');
+    )
+      .populate('owner', '-password')
+      .populate('members', '-password');
 
     if (!updatedGroup) {
       return res.status(400).json({
@@ -218,8 +220,8 @@ exports.updateGroup = async (req, res, next) => {
       });
     }
 
-    const populatedMembers = await User.find({ _id: { $in: groupMembers } });
-    notify(populatedMembers, updatedGroup);
+    //const populatedMembers = await User.find({ _id: { $in: groupMembers } });
+    notify(updatedGroup);
 
     return res.status(200).json({ updatedGroup });
   } catch (err) {
