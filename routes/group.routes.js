@@ -26,7 +26,7 @@ router.delete(
   '/:groupId',
   idValidation,
   isAuthenticated,
-  isGroupMember,
+  isGroupOwner,
   deleteGroup
 );
 
@@ -44,7 +44,7 @@ router.patch(
   '/:groupId',
   idValidation,
   isAuthenticated,
-  isGroupOwner,
+  isGroupMember,
   updateGroup
 );
 

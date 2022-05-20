@@ -1,4 +1,3 @@
-const { encryptId } = require('../../helpers/encryptId');
 const Group = require('../../models/Group.model');
 const User = require('../../models/User.model');
 

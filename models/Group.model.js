@@ -58,6 +58,27 @@ groupSchema.pre('findOneAndDelete', async function (next) {
 });
 
 // Make group members as friends
+groupSchema.pre('findOneAndUpdate', async function (doc, next) {
+  try {
+    console.log('I fire');
+    const groupMembers = this.getUpdate().members;
+
+    for (let member of groupMembers) {
+      const newFriends = groupMembers.filter((m) => {
+        return m !== member;
+      });
+
+      await User.findByIdAndUpdate(member, {
+        $addToSet: { friends: newFriends },
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    next(createError.InternalServerError('Error in updating users friends'));
+  }
+});
+
+// For seeding
 groupSchema.post('save', async function (doc, next) {
   try {
     const groupMembers = doc.members;

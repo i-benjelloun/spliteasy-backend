@@ -84,18 +84,11 @@ exports.createGroup = async (req, res, next) => {
 exports.deleteGroup = async (req, res, next) => {
   try {
     const { groupId } = req.params;
-    const group = await Group.findById(groupId);
-    if (req.payload._id !== group.owner.toString()) {
-      return res
-        .status(403)
-        .json({ errorMessage: 'Only group owner can delete a group' });
+    const deletedGroup = await Group.findOneAndDelete({ _id: groupId });
+    if (!deletedGroup) {
+      return res.status(404).json({ errorMessage: 'Group not found' });
     } else {
-      const deletedGroup = await Group.findOneAndDelete({ _id: groupId });
-      if (!deletedGroup) {
-        return res.status(404).json({ errorMessage: 'Group not found' });
-      } else {
-        res.status(200).json({ deletedGroup });
-      }
+      res.status(200).json({ deletedGroup });
     }
   } catch (err) {
     next(createError.InternalServerError(err.name + ' : ' + err.message));
@@ -167,31 +160,37 @@ exports.updateGroup = async (req, res, next) => {
         }
       }
 
-      // Can't remove a member who was involved in at least one expense
-      // const groupExpenses = await Expense.find({ group: groupId });
-      // const currentGroup = await Group.findById(groupId);
+      // Can't remove group owner or member who was involved in at least one expense
+      const groupExpenses = await Expense.find({ group: groupId });
+      const currentGroup = await Group.findById(groupId);
 
-      // for (let member of currentGroup.members) {
-      //   // Perform verifications on deleted members only
-      //   if (!groupMembers.includes(member.toString())) {
-      //     // Expenses where deleted member was involved
-      //     const memberExpenses = groupExpenses.filter((exp) => {
-      //       return (
-      //         exp.paid_by.equals(member) ||
-      //         exp.shares.filter((share) => {
-      //           return share.shared_with.equals(member);
-      //         }).length !== 0
-      //       );
-      //     });
+      if (!groupMembers.includes(currentGroup.owner._id.toString())) {
+        return res.status(403).json({
+          errorMessage: `Can't remove the group owner from the members.`,
+        });
+      }
 
-      //     // If member was involved in an expense return an error
-      //     if (memberExpenses.length > 0) {
-      //       return res.status(403).json({
-      //         errorMessage: `Can't remove a member who was involved in at least one expense`,
-      //       });
-      //     }
-      //   }
-      // }
+      for (let member of currentGroup.members) {
+        // Perform verifications on deleted members only
+        if (!groupMembers.includes(member.toString())) {
+          // Expenses where deleted member was involved
+          const memberExpenses = groupExpenses.filter((exp) => {
+            return (
+              exp.paid_by.equals(member) ||
+              exp.shares.filter((share) => {
+                return share.shared_with.equals(member);
+              }).length !== 0
+            );
+          });
+
+          // If member was involved in an expense return an error
+          if (memberExpenses.length > 0) {
+            return res.status(403).json({
+              errorMessage: `Can't remove a member who was involved in at least one expense`,
+            });
+          }
+        }
+      }
     }
 
     // Update group
@@ -212,8 +211,7 @@ exports.updateGroup = async (req, res, next) => {
       });
     }
 
-    //const populatedMembers = await User.find({ _id: { $in: groupMembers } });
-    notify(updatedGroup);
+    //notify(updatedGroup);
 
     return res.status(200).json({ updatedGroup });
   } catch (err) {
