@@ -61,7 +61,6 @@ groupSchema.pre('findOneAndDelete', async function (next) {
 groupSchema.pre('findOneAndUpdate', async function (doc, next) {
   try {
     const { members } = this.getUpdate();
-
     if (members) {
       for (let member of members) {
         const newFriends = members.filter((m) => {
