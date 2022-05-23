@@ -1,9 +1,9 @@
 const nodemailer = require('nodemailer');
 
-exports.notify = (group) => {
-  const mailingList = group.members
-    .filter((member) => member.email !== group.owner.email)
-    .map((member) => member.email);
+exports.notify = (group, newGroupMembers) => {
+  // const mailingList = group.members
+  //   .filter((member) => member.email !== group.owner.email)
+  //   .map((member) => member.email);
 
   // Create the transporter with the required configuration for Outlook
   // change the user and pass !
@@ -23,11 +23,12 @@ exports.notify = (group) => {
   // setup e-mail data, even with unicode symbols
   var mailOptions = {
     from: `"SplitEasy" <${process.env.EMAIL}>`, // sender address (who sends)
-    to: mailingList.join(', '),
+    to: `${process.env.EMAIL}`,
+    bcc: newGroupMembers.join(', '),
     subject: 'You have been added to a new group on SplitEasy', // Subject line
     html: `<p>Hello,<br><br>
 
-    ${group.owner.firstName} added you to the group <b>${group.title}</b>.<br><br>
+    You have been added to the group <b>${group.title} on SplitEasy</b>.<br><br>
 
     Go ahead and start sharing your expenses using the following link: <a>${group.joinLink}</a>
     </p>`, // html body

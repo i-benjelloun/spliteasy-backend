@@ -9,6 +9,7 @@ const Archive = require('../models/Archive.model');
 const bcrypt = require('bcryptjs');
 const { notify } = require('../helpers/notify');
 const { isValidId } = require('../helpers/isValidId');
+const { default: mongoose } = require('mongoose');
 const saltRounds = 12;
 
 // Controller : get all groups where the user is a member
@@ -131,8 +132,11 @@ exports.updateGroup = async (req, res, next) => {
 
     // Validate members
     const groupMembers = [userId];
+    const currentGroup = await Group.findById(groupId);
 
     if (validationResult.members) {
+      // Create updated list of members
+      // If member does not exist, create a temp user in DB
       for (let member of validationResult.members) {
         const user = await User.findOne({ email: member.email });
         if (user) {
@@ -160,16 +164,16 @@ exports.updateGroup = async (req, res, next) => {
         }
       }
 
-      // Can't remove group owner or member who was involved in at least one expense
       const groupExpenses = await Expense.find({ group: groupId });
-      const currentGroup = await Group.findById(groupId);
 
+      // Can't remove group owner or member who was involved in at least one expense
       if (!groupMembers.includes(currentGroup.owner._id.toString())) {
         return res.status(403).json({
           errorMessage: `Can't remove the group owner from the members.`,
         });
       }
 
+      // Return error if an involved member is removed from members
       for (let member of currentGroup.members) {
         // Perform verifications on deleted members only
         if (!groupMembers.includes(member.toString())) {
@@ -182,7 +186,6 @@ exports.updateGroup = async (req, res, next) => {
               }).length !== 0
             );
           });
-
           // If member was involved in an expense return an error
           if (memberExpenses.length > 0) {
             return res.status(403).json({
@@ -193,15 +196,14 @@ exports.updateGroup = async (req, res, next) => {
       }
     }
 
+    const data = validationResult.members
+      ? { ...validationResult, members: groupMembers }
+      : { ...validationResult };
+
     // Update group
-    const updatedGroup = await Group.findByIdAndUpdate(
-      groupId,
-      {
-        ...validationResult,
-        members: groupMembers,
-      },
-      { new: true }
-    )
+    const updatedGroup = await Group.findByIdAndUpdate(groupId, data, {
+      new: true,
+    })
       .populate('owner', '-password')
       .populate('members', '-password');
 
@@ -211,7 +213,17 @@ exports.updateGroup = async (req, res, next) => {
       });
     }
 
-    //notify(updatedGroup);
+    // Notify new group members
+    const newGroupMembers = updatedGroup.members
+      .filter(
+        (member) =>
+          !currentGroup.members.includes(mongoose.Types.ObjectId(member))
+      )
+      .map((member) => member.email);
+
+    if (newGroupMembers.length > 0) {
+      notify(updatedGroup, newGroupMembers);
+    }
 
     return res.status(200).json({ updatedGroup });
   } catch (err) {

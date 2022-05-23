@@ -60,17 +60,18 @@ groupSchema.pre('findOneAndDelete', async function (next) {
 // Make group members as friends
 groupSchema.pre('findOneAndUpdate', async function (doc, next) {
   try {
-    console.log('I fire');
-    const groupMembers = this.getUpdate().members;
+    const { members } = this.getUpdate();
 
-    for (let member of groupMembers) {
-      const newFriends = groupMembers.filter((m) => {
-        return m !== member;
-      });
+    if (members) {
+      for (let member of members) {
+        const newFriends = members.filter((m) => {
+          return m !== member;
+        });
 
-      await User.findByIdAndUpdate(member, {
-        $addToSet: { friends: newFriends },
-      });
+        await User.findByIdAndUpdate(member, {
+          $addToSet: { friends: newFriends },
+        });
+      }
     }
   } catch (err) {
     console.log(err);
