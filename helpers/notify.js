@@ -1,10 +1,6 @@
 const nodemailer = require('nodemailer');
 
 exports.notify = (group, newGroupMembers) => {
-  // const mailingList = group.members
-  //   .filter((member) => member.email !== group.owner.email)
-  //   .map((member) => member.email);
-
   // Create the transporter with the required configuration for Outlook
   // change the user and pass !
   var transporter = nodemailer.createTransport({
@@ -31,7 +27,7 @@ exports.notify = (group, newGroupMembers) => {
     You have been added to the group <b>${group.title} on SplitEasy</b>.<br><br>
 
     Go ahead and start sharing your expenses using the following link: <a>${group.joinLink}</a>
-    </p>`, // html body
+    </p>`,
   };
 
   // send mail with defined transport object
@@ -39,7 +35,6 @@ exports.notify = (group, newGroupMembers) => {
     if (error) {
       return console.log(error);
     }
-
     console.log('Message sent: ' + info.response);
   });
 };
