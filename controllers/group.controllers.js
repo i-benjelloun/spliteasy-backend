@@ -262,10 +262,14 @@ exports.joinGroup = async (req, res, next) => {
     if (!isValidId(groupId)) {
       return res.status(404).json({ errorMessage: 'Group not found' });
     } else {
+      const group = await Group.findById(groupId);
+      const groupMembers = group.members.map((member) => member.toString());
+      groupMembers.push(req.payload._id);
+
       const updatedGroup = await Group.findByIdAndUpdate(
         groupId,
         {
-          $addToSet: { members: [req.payload._id] },
+          members: [...new Set(groupMembers)],
         },
         { new: true }
       );
