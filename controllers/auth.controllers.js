@@ -9,6 +9,9 @@ const signupController = async (req, res, next) => {
   try {
     const { firstName, lastName, email, password } = req.body;
 
+    const salt = bcrypt.genSaltSync(saltRounds);
+    const hashedPassword = bcrypt.hashSync(password, salt);
+
     // Check if email or password or name are provided as empty string
     if (firstName === '' || lastName === '' || email === '' || password === '')
       return res.status(400).json({
@@ -34,16 +37,25 @@ const signupController = async (req, res, next) => {
 
     // Check the users collection if a user with the same email already exists
     const user = await User.findOne({ email });
-    if (user) {
-      return res.status(400).json({
-        errorMessage: 'User already exists.',
-      });
-    } else {
-      // If email is unique, proceed to hash the password
-      const salt = bcrypt.genSaltSync(saltRounds);
-      const hashedPassword = bcrypt.hashSync(password, salt);
 
-      // Create the new user in the database
+    if (user) {
+      if (user.isTemp) {
+        const createdUser = await User.findByIdAndUpdate(user._id, {
+          firstName,
+          lastName,
+          password: hashedPassword,
+          isTemp: false,
+        });
+
+        res.status(201).json({
+          createdUser: createdUser._id,
+        });
+      } else {
+        return res.status(400).json({
+          errorMessage: 'User already exists.',
+        });
+      }
+    } else {
       const createdUser = await User.create({
         firstName,
         lastName,
@@ -76,7 +88,7 @@ const loginController = async (req, res, next) => {
     // Check the users collection if a user with the same email exists
     const foundUser = await User.findOne({ email });
 
-    if (!foundUser) {
+    if (!foundUser || foundUser.isTemp) {
       // If the user is not found, send an error response
       return res.status(400).json({ errorMessage: 'Wrong crendentials.' });
     } else {

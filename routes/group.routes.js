@@ -26,7 +26,7 @@ router.delete(
   '/:groupId',
   idValidation,
   isAuthenticated,
-  isGroupMember,
+  isGroupOwner,
   deleteGroup
 );
 
@@ -44,7 +44,7 @@ router.patch(
   '/:groupId',
   idValidation,
   isAuthenticated,
-  isGroupOwner,
+  isGroupMember,
   updateGroup
 );
 
@@ -74,7 +74,5 @@ router.delete(
   isGroupMember,
   restoreGroup
 );
-
-router.patch('/:encryptedId/join', isAuthenticated, joinGroup);
 
 module.exports = router;

@@ -5,6 +5,7 @@ const Expense = require('./Expense.model');
 const Comment = require('./Comment.model');
 const Archive = require('./Archive.model');
 const { currency_codes } = require('../helpers/currencies');
+require('dotenv/config');
 
 const groupSchema = new Schema({
   title: { type: String, required: true },
@@ -25,6 +26,18 @@ const groupSchema = new Schema({
     type: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     required: true,
   },
+  joinLink: {
+    type: String,
+    default: '',
+  },
+});
+
+groupSchema.pre('save', async function (next) {
+  try {
+    this.joinLink = `${process.env.ORIGIN}/join/${this._id.toString()}`;
+  } catch (err) {
+    next(createError.BadRequest('JoinLink was not created'));
+  }
 });
 
 // Delete archives related to this group when deleting it
@@ -35,7 +48,6 @@ groupSchema.pre('findOneAndDelete', async function (next) {
     const expensesIds = expenses.map((expense) => {
       return expense._id;
     });
-
     await Comment.deleteMany({ expense: { $in: expensesIds } });
     await Expense.deleteMany({ group: groupId });
     await Archive.deleteMany({ group: groupId });
@@ -46,6 +58,28 @@ groupSchema.pre('findOneAndDelete', async function (next) {
 });
 
 // Make group members as friends
+groupSchema.pre('findOneAndUpdate', async function (doc, next) {
+  try {
+    const { members } = this.getUpdate();
+
+    if (members) {
+      for (let member of members) {
+        const newFriends = members.filter((m) => {
+          return m !== member;
+        });
+
+        await User.findByIdAndUpdate(member, {
+          $addToSet: { friends: newFriends },
+        });
+      }
+    }
+  } catch (err) {
+    console.log(err);
+    next(createError.InternalServerError('Error in updating users friends'));
+  }
+});
+
+// For seeding
 groupSchema.post('save', async function (doc, next) {
   try {
     const groupMembers = doc.members;
@@ -53,11 +87,13 @@ groupSchema.post('save', async function (doc, next) {
       const newFriends = groupMembers.filter((m) => {
         return !m.equals(member);
       });
+
       await User.findByIdAndUpdate(member, {
         $addToSet: { friends: newFriends },
       });
     }
   } catch (err) {
+    console.log(err);
     next(createError.InternalServerError('Error in updating users friends'));
   }
 });
