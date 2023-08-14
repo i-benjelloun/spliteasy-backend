@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const MONGO_URI =
-  process.env.MONGODB_URI || 'mongodb://localhost/spliteasy-backend';
+  process.env.MONGODB_URI || 'mongodb://127.0.0.1/spliteasy-backend';
 
 const connectDB = async function () {
   try {

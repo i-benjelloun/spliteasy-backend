@@ -100,7 +100,7 @@ const loginController = async (req, res, next) => {
         const payload = { _id: foundUser._id, email: foundUser.email };
 
         // Create and sign the token
-        const authToken = jwt.sign(payload, process.env.TOKEN_SECRET, {
+        const authToken = jwt.sign(payload, process.env.TOKEN_SECRET || "SECRET", {
           algorithm: 'HS256',
           expiresIn: '6h',
         });

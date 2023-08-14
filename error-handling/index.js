@@ -6,6 +6,7 @@ module.exports = (app) => {
 
   app.use((err, req, res, next) => {
     // whenever you call next(err), this middleware will handle the error
-    res.status(err.status).json({ errorMessage: err.message });
+    const status = err.status || 500;
+    res.status(status).json({ errorMessage: err.message });
   });
 };
